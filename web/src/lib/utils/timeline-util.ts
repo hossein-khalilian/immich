@@ -1,5 +1,5 @@
 import type { AssetDescriptor, TimelineAsset, ViewportTopMonth } from '$lib/managers/timeline-manager/types';
-import { locale } from '$lib/stores/preferences.store';
+import { locale, lang } from '$lib/stores/preferences.store';
 import { getAssetRatio } from '$lib/utils/asset-utils';
 import { AssetTypeEnum, type AssetResponseDto } from '@immich/sdk';
 import { DateTime, type LocaleOptions } from 'luxon';
@@ -30,8 +30,15 @@ export type ScrubberListener = (scrubberData: {
 }) => void | Promise<void>;
 
 // used for AssetResponseDto.dateTimeOriginal, amongst others
-export const fromISODateTime = (isoDateTime: string, timeZone: string): DateTime<true> =>
-  DateTime.fromISO(isoDateTime, { zone: timeZone, locale: get(locale) }) as DateTime<true>;
+export const fromISODateTime = (isoDateTime: string, timeZone: string): DateTime<true> => {
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  // Only use Persian calendar if language is Persian (fa)
+  const finalLocale = (currentLang === 'fa') 
+    ? 'fa-IR-u-ca-persian' 
+    : (userLocale || 'en');
+  return DateTime.fromISO(isoDateTime, { zone: timeZone, locale: finalLocale }) as DateTime<true>;
+};
 
 export const fromISODateTimeToObject = (isoDateTime: string, timeZone: string): TimelineDateTime =>
   (fromISODateTime(isoDateTime, timeZone) as DateTime<true>).toObject();
@@ -79,20 +86,44 @@ export const getTimes = (isoDateTimeUtc: string, localUtcOffsetHours: number) =>
   };
 };
 
-export const fromTimelinePlainDateTime = (timelineDateTime: TimelineDateTime): DateTime<true> =>
-  DateTime.fromObject(timelineDateTime, { zone: 'local', locale: get(locale) }) as DateTime<true>;
+export const fromTimelinePlainDateTime = (timelineDateTime: TimelineDateTime): DateTime<true> => {
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  // Only use Persian calendar if language is Persian (fa)
+  const finalLocale = (currentLang === 'fa') 
+    ? 'fa-IR-u-ca-persian' 
+    : (userLocale || 'en');
+  
+  return DateTime.fromObject(timelineDateTime, { zone: 'local', locale: finalLocale }) as DateTime<true>;
+};
 
-export const fromTimelinePlainDate = (timelineYearMonth: TimelineDate): DateTime<true> =>
-  DateTime.fromObject(
+export const fromTimelinePlainDate = (timelineYearMonth: TimelineDate): DateTime<true> => {
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  // Only use Persian calendar if language is Persian (fa)
+  const finalLocale = (currentLang === 'fa') 
+    ? 'fa-IR-u-ca-persian' 
+    : (userLocale || 'en');
+  
+  return DateTime.fromObject(
     { year: timelineYearMonth.year, month: timelineYearMonth.month, day: timelineYearMonth.day },
-    { zone: 'local', locale: get(locale) },
+    { zone: 'local', locale: finalLocale },
   ) as DateTime<true>;
+};
 
-export const fromTimelinePlainYearMonth = (timelineYearMonth: TimelineYearMonth): DateTime<true> =>
-  DateTime.fromObject(
+export const fromTimelinePlainYearMonth = (timelineYearMonth: TimelineYearMonth): DateTime<true> => {
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  // Only use Persian calendar if language is Persian (fa)
+  const finalLocale = (currentLang === 'fa') 
+    ? 'fa-IR-u-ca-persian' 
+    : (userLocale || 'en');
+  
+  return DateTime.fromObject(
     { year: timelineYearMonth.year, month: timelineYearMonth.month },
-    { zone: 'local', locale: get(locale) },
+    { zone: 'local', locale: finalLocale },
   ) as DateTime<true>;
+};
 
 export const toISOYearMonthUTC = ({ year, month }: TimelineYearMonth): string => {
   const yearFull = `${year}`.padStart(4, '0');
@@ -100,17 +131,96 @@ export const toISOYearMonthUTC = ({ year, month }: TimelineYearMonth): string =>
   return `${yearFull}-${monthFull}-01T00:00:00.000Z`;
 };
 
+/**
+ * Get Persian year from TimelineYearMonth
+ * Note: This assumes the year/month in TimelineYearMonth is already in Gregorian
+ * and converts it to Persian for display
+ */
+/**
+ * Convert Persian/Arabic digits to Latin digits
+ */
+function convertDigitsToLatin(str: string): string {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  let result = str;
+  // Replace Persian digits
+  for (let i = 0; i < 10; i++) {
+    result = result.replace(new RegExp(persianDigits[i], 'g'), i.toString());
+  }
+  // Replace Arabic digits
+  for (let i = 0; i < 10; i++) {
+    result = result.replace(new RegExp(arabicDigits[i], 'g'), i.toString());
+  }
+  return result;
+}
+
+/**
+ * Convert Latin digits to Persian digits
+ */
+export function convertDigitsToPersian(num: number | string): string {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const str = num.toString();
+  let result = '';
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char >= '0' && char <= '9') {
+      result += persianDigits[parseInt(char, 10)];
+    } else {
+      result += char;
+    }
+  }
+  return result;
+}
+
+export function getPersianYear(timelineYearMonth: TimelineYearMonth): number {
+  const currentLang = get(lang);
+  // Only convert to Persian year if language is Persian (fa)
+  if (currentLang === 'fa') {
+    try {
+      // Create a Date object in Gregorian calendar
+      const gregorianDate = new Date(timelineYearMonth.year, timelineYearMonth.month - 1, 1);
+      // Use Intl.DateTimeFormat to get Persian year
+      const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+        year: 'numeric',
+        calendar: 'persian'
+      });
+      const parts = formatter.formatToParts(gregorianDate);
+      const yearPart = parts.find(part => part.type === 'year');
+      if (yearPart && yearPart.value) {
+        // Convert Persian/Arabic digits to Latin, then parse
+        const latinDigits = convertDigitsToLatin(yearPart.value);
+        const persianYear = parseInt(latinDigits.replace(/[^0-9]/g, ''), 10);
+        // Check if result is valid number
+        if (!isNaN(persianYear) && persianYear > 0 && persianYear < 10000) {
+          return persianYear;
+        }
+      }
+    } catch (error) {
+      console.warn('Error converting to Persian year:', error);
+    }
+    // Fallback to Gregorian year if conversion fails
+    return timelineYearMonth.year;
+  }
+  return timelineYearMonth.year;
+}
+
 export function formatMonthGroupTitle(_date: DateTime): string {
   if (!_date.isValid) {
     return _date.toString();
   }
   const date = _date as DateTime<true>;
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  const isPersian = currentLang === 'fa';
+  const finalLocale = isPersian ? 'fa-IR-u-ca-persian' : (userLocale || 'en');
+  
   return date.toLocaleString(
     {
       month: 'short',
       year: 'numeric',
+      calendar: isPersian ? 'persian' : undefined,
     },
-    { locale: get(locale) },
+    { locale: finalLocale },
   );
 }
 
@@ -119,40 +229,75 @@ export function formatGroupTitle(_date: DateTime): string {
     return _date.toString();
   }
   const date = _date as DateTime<true>;
-  const today = DateTime.now().startOf('day');
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  const isPersian = currentLang === 'fa';
+  const finalLocale = isPersian ? 'fa-IR-u-ca-persian' : (userLocale || 'en');
+  
+  const today = DateTime.now().setLocale(finalLocale).startOf('day');
+  const dateWithLocale = date.setLocale(finalLocale);
 
   // Today
-  if (today.hasSame(date, 'day')) {
-    return date.toRelativeCalendar({ locale: get(locale) });
+  if (today.hasSame(dateWithLocale, 'day')) {
+    return dateWithLocale.toRelativeCalendar({ locale: finalLocale });
   }
 
   // Yesterday
-  if (today.minus({ days: 1 }).hasSame(date, 'day')) {
-    return date.toRelativeCalendar({ locale: get(locale) });
+  if (today.minus({ days: 1 }).hasSame(dateWithLocale, 'day')) {
+    return dateWithLocale.toRelativeCalendar({ locale: finalLocale });
   }
 
   // Last week
-  if (date >= today.minus({ days: 6 }) && date < today) {
-    return date.toLocaleString({ weekday: 'long' }, { locale: get(locale) });
+  if (dateWithLocale >= today.minus({ days: 6 }) && dateWithLocale < today) {
+    return dateWithLocale.toLocaleString(
+      { 
+        weekday: 'long',
+        calendar: isPersian ? 'persian' : undefined,
+      }, 
+      { locale: finalLocale }
+    );
   }
 
   // This year
-  if (today.hasSame(date, 'year')) {
-    return date.toLocaleString(
+  if (today.hasSame(dateWithLocale, 'year')) {
+    return dateWithLocale.toLocaleString(
       {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
+        calendar: isPersian ? 'persian' : undefined,
       },
-      { locale: get(locale) },
+      { locale: finalLocale },
     );
   }
 
-  return getDateLocaleString(date, { locale: get(locale) });
+  return getDateLocaleString(date, { locale: finalLocale });
 }
 
-export const getDateLocaleString = (date: DateTime, opts?: LocaleOptions): string =>
-  date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY, opts);
+export const getDateLocaleString = (date: DateTime, opts?: LocaleOptions): string => {
+  const currentLang = get(lang);
+  const userLocale = get(locale);
+  const isPersian = currentLang === 'fa';
+  
+  // Only use Persian calendar if language is Persian (fa)
+  const finalLocale = isPersian ? 'fa-IR-u-ca-persian' : (opts?.locale || userLocale || 'en');
+  
+  // Build format options - don't pass calendar if not Persian
+  const formatOpts: Intl.DateTimeFormatOptions = {
+    ...DateTime.DATE_MED_WITH_WEEKDAY,
+  };
+  if (isPersian) {
+    formatOpts.calendar = 'persian';
+  }
+  // For non-Persian, explicitly don't set calendar (use default Gregorian)
+  
+  const finalOpts = { 
+    ...opts,
+    locale: finalLocale,
+  };
+  
+  return date.toLocaleString(formatOpts, finalOpts);
+};
 
 export const toTimelineAsset = (unknownAsset: AssetResponseDto | TimelineAsset): TimelineAsset => {
   if (isTimelineAsset(unknownAsset)) {

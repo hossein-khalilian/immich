@@ -5,6 +5,7 @@
   import SettingSwitch from '$lib/components/shared-components/settings/setting-switch.svelte';
   import { dateFormats } from '$lib/constants';
   import { locale } from '$lib/stores/preferences.store';
+  import { formatDateTimeWithCalendar } from '$lib/utils/date-locale';
   import { purchaseStore } from '$lib/stores/purchase.store';
   import { preferences, user } from '$lib/stores/user.store';
   import { handleError } from '$lib/utils/handle-error';
@@ -164,7 +165,7 @@
               <p class="dark:text-white text-sm mt-1 col-start-2">
                 {$t('purchase_activated_time', {
                   values: {
-                    date: new Date($user.license?.activatedAt).toLocaleString($locale, dateFormats.settings),
+                    date: formatDateTimeWithCalendar(new Date($user.license?.activatedAt), dateFormats.settings),
                   },
                 })}
               </p>

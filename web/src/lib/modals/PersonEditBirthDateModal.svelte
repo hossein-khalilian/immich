@@ -1,10 +1,13 @@
 <script lang="ts">
   import DateInput from '$lib/elements/DateInput.svelte';
   import { handleError } from '$lib/utils/handle-error';
+  import { jalaliToGregorian } from '$lib/utils/jalali-converter';
+  import { lang } from '$lib/stores/preferences.store';
   import { updatePerson, type PersonResponseDto } from '@immich/sdk';
   import { Button, HStack, Modal, ModalBody, ModalFooter, toastManager } from '@immich/ui';
   import { mdiCake } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import { get } from 'svelte/store';
 
   interface Props {
     person: PersonResponseDto;
@@ -18,9 +21,20 @@
 
   const handleUpdateBirthDate = async () => {
     try {
+      // Convert Jalali to Gregorian if language is Persian and date is in Jalali format
+      let gregorianBirthDate = birthDate;
+      const currentLang = get(lang);
+      if (currentLang === 'fa' && birthDate && birthDate.includes('/')) {
+        try {
+          gregorianBirthDate = jalaliToGregorian(birthDate);
+        } catch (error) {
+          console.error('Error converting Jalali to Gregorian birth date:', error);
+        }
+      }
+      
       const updatedPerson = await updatePerson({
         id: person.id,
-        personUpdateDto: { birthDate },
+        personUpdateDto: { birthDate: gregorianBirthDate },
       });
 
       toastManager.success($t('date_of_birth_saved'));

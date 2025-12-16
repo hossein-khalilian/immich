@@ -7,11 +7,14 @@
   import { user } from '$lib/stores/user.store';
   import { getOwnedAssetsWithWarning } from '$lib/utils/asset-utils';
   import { handleError } from '$lib/utils/handle-error';
+  import { jalaliDateTimeToGregorian } from '$lib/utils/jalali-converter';
+  import { lang } from '$lib/stores/preferences.store';
   import { updateAssets } from '@immich/sdk';
   import { Button, Field, HStack, Label, Modal, ModalBody, ModalFooter, Switch } from '@immich/ui';
   import { mdiCalendarEdit } from '@mdi/js';
   import { DateTime } from 'luxon';
   import { t } from 'svelte-i18n';
+  import { get } from 'svelte/store';
 
   interface Props {
     initialDate?: DateTime;
@@ -44,7 +47,18 @@
         onClose(true);
         return;
       }
-      const isoDate = toIsoDate(selectedDate, selectedOption);
+      // Convert Jalali datetime to Gregorian if language is Persian
+      let dateToUse = selectedDate;
+      const currentLang = get(lang);
+      if (currentLang === 'fa' && selectedDate && selectedDate.includes('/')) {
+        try {
+          dateToUse = jalaliDateTimeToGregorian(selectedDate);
+        } catch (error) {
+          console.error('Error converting Jalali datetime to Gregorian:', error);
+        }
+      }
+      
+      const isoDate = toIsoDate(dateToUse, selectedOption);
       await updateAssets({ assetBulkUpdateDto: { ids, dateTimeOriginal: isoDate } });
       onClose(true);
     } catch (error) {

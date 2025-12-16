@@ -6,8 +6,9 @@
   import MenuOption from '$lib/components/shared-components/context-menu/menu-option.svelte';
   import { AppRoute, timeBeforeShowLoadingSpinner } from '$lib/constants';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
-  import { locale } from '$lib/stores/preferences.store';
+  import { locale, lang } from '$lib/stores/preferences.store';
   import { getAssetThumbnailUrl } from '$lib/utils';
+  import { formatDateWithCalendar } from '$lib/utils/date-locale';
   import { getAssetType } from '$lib/utils/asset-utils';
   import { handleError } from '$lib/utils/handle-error';
   import { isTenMinutesApart } from '$lib/utils/timesince';
@@ -21,8 +22,10 @@
   const units: Intl.RelativeTimeFormatUnit[] = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second'];
 
   const shouldGroup = (currentDate: string, nextDate: string): boolean => {
-    const currentDateTime = luxon.DateTime.fromISO(currentDate, { locale: $locale });
-    const nextDateTime = luxon.DateTime.fromISO(nextDate, { locale: $locale });
+    const isPersian = $lang === 'fa';
+    const finalLocale = isPersian ? 'fa-IR-u-ca-persian' : ($locale || 'en');
+    const currentDateTime = luxon.DateTime.fromISO(currentDate, { locale: finalLocale });
+    const nextDateTime = luxon.DateTime.fromISO(nextDate, { locale: finalLocale });
 
     return currentDateTime.hasSame(nextDateTime, 'hour') || currentDateTime.toRelative() === nextDateTime.toRelative();
   };
@@ -57,14 +60,18 @@
   let message = $state('');
   let isSendingMessage = $state(false);
 
-  const timeOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  };
+  const timeOptions = $derived.by(() => {
+    const isPersian = $lang === 'fa';
+    return {
+      year: 'numeric' as const,
+      month: '2-digit' as const,
+      day: '2-digit' as const,
+      hour: '2-digit' as const,
+      minute: '2-digit' as const,
+      hour12: false,
+      calendar: isPersian ? ('persian' as const) : undefined,
+    };
+  });
 
   const handleDeleteReaction = async (reaction: ActivityResponseDto, index: number) => {
     try {
@@ -175,7 +182,7 @@
                 class="pt-1 px-2 text-right w-full text-sm text-gray-500 dark:text-gray-300"
                 title={new Date(reaction.createdAt).toLocaleDateString(undefined, timeOptions)}
               >
-                {timeSince(luxon.DateTime.fromISO(reaction.createdAt, { locale: $locale }))}
+                {timeSince(luxon.DateTime.fromISO(reaction.createdAt, { locale: ($lang === 'fa') ? 'fa-IR-u-ca-persian' : ($locale || 'en') }))}
               </div>
             {/if}
           {:else if reaction.type === ReactionType.Like}
@@ -225,9 +232,9 @@
               {#if (index != activityManager.activities.length - 1 && isTenMinutesApart(activityManager.activities[index].createdAt, activityManager.activities[index + 1].createdAt)) || index === activityManager.activities.length - 1}
                 <div
                   class="pt-1 px-2 text-right w-full text-sm text-gray-500 dark:text-gray-300"
-                  title={new Date(reaction.createdAt).toLocaleDateString(navigator.language, timeOptions)}
+                  title={formatDateWithCalendar(new Date(reaction.createdAt), timeOptions)}
                 >
-                  {timeSince(luxon.DateTime.fromISO(reaction.createdAt, { locale: $locale }))}
+                  {timeSince(luxon.DateTime.fromISO(reaction.createdAt, { locale: ($lang === 'fa') ? 'fa-IR-u-ca-persian' : ($locale || 'en') }))}
                 </div>
               {/if}
             </div>

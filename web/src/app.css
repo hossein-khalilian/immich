@@ -3,6 +3,15 @@
 @source "../node_modules/@immich/ui";
 /* @import '/usr/ui/dist/theme/default.css'; */
 
+/* RTL Support */
+[dir='rtl'] {
+  direction: rtl;
+}
+
+[dir='ltr'] {
+  direction: ltr;
+}
+
 @utility immich-form-input {
   @apply rounded-xl bg-slate-200 px-3 py-3 text-sm focus:border-immich-primary disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-gray-100 dark:bg-gray-600 dark:text-immich-dark-fg dark:disabled:bg-gray-800 dark:disabled:text-gray-200;
 }
@@ -101,12 +110,113 @@
     size-adjust: 106.25%;
   }
 
+  /* Yekan font for Persian - using local files */
+  @font-face {
+    font-family: 'Yekan';
+    src: url('$lib/assets/fonts/yekan/Yekan.woff2') format('woff2'),
+         url('$lib/assets/fonts/yekan/Yekan.woff') format('woff'),
+         url('$lib/assets/fonts/yekan/Yekan.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Yekan';
+    src: url('$lib/assets/fonts/yekan/YekanBold.woff2') format('woff2'),
+         url('$lib/assets/fonts/yekan/YekanBold.woff') format('woff'),
+         url('$lib/assets/fonts/yekan/YekanBold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+  }
+
   :root {
     font-family: 'Overpass', sans-serif;
     /* Used by layouts to ensure proper spacing between navbar and content */
     --navbar-height: calc(4.5rem + 4px);
     --navbar-height-md: calc(4.5rem + 4px - 14px);
   }
+
+  /* Use Yekan font for RTL languages */
+  html[dir='rtl'],
+  body[dir='rtl'],
+  [dir='rtl'] {
+    font-family: 'Yekan', 'Vazir', 'Tahoma', 'Arial', sans-serif;
+  }
+  
+  /* Apply Yekan to all elements in RTL context */
+  [dir='rtl'] * {
+    font-family: inherit;
+  }
+
+  /* Remove text-transform capitalize for RTL languages (Persian, Arabic, etc.) */
+  [dir='rtl'] .capitalize,
+  [dir='rtl'] [class*='capitalize'] {
+    text-transform: none !important;
+  }
+  
+  /* Disable first-letter capitalization in RTL */
+  [dir='rtl'] .first-letter\:capitalize::first-letter,
+  [dir='rtl'] [class*='first-letter:capitalize']::first-letter {
+    text-transform: none !important;
+  }
+
+  /* Flip chevron navigation icons in RTL (previous/next arrows should be reversed) */
+  /* Flip icons in navigation area buttons */
+  [dir='rtl'] .navigation-area-button svg {
+    transform: scaleX(-1);
+  }
+  
+  /* Flip chevron icons in IconButtons with previous/next aria-labels */
+  [dir='rtl'] button[aria-label*='previous'] svg,
+  [dir='rtl'] button[aria-label*='Previous'] svg,
+  [dir='rtl'] button[aria-label*='قبلی'] svg,
+  [dir='rtl'] button[aria-label*='next'] svg,
+  [dir='rtl'] button[aria-label*='Next'] svg,
+  [dir='rtl'] button[aria-label*='بعدی'] svg {
+    transform: scaleX(-1);
+  }
+
+  /* Flip back/return arrow icons in RTL */
+  /* Target IconButtons with back arrow icons - using aria-label matching */
+  [dir='rtl'] button[aria-label*='back'] svg,
+  [dir='rtl'] button[aria-label*='Back'] svg,
+  [dir='rtl'] button[aria-label*='بازگشت'] svg,
+  [dir='rtl'] button[aria-label*='go_back'] svg,
+  [dir='rtl'] [aria-label*='back'] svg,
+  [dir='rtl'] [aria-label*='Back'] svg,
+  [dir='rtl'] [aria-label*='بازگشت'] svg,
+  [dir='rtl'] [aria-label*='go_back'] svg {
+    transform: scaleX(-1);
+  }
+  
+  /* Flip close action buttons that use arrow left icon */
+  [dir='rtl'] button[aria-label*='close'] svg,
+  [dir='rtl'] button[aria-label*='Close'] svg,
+  [dir='rtl'] button[aria-label*='بستن'] svg {
+    transform: scaleX(-1);
+  }
+  
+/* Flip arrow left icons in control app bar and other back buttons */
+/* This targets buttons that use mdiArrowLeft icon */
+[dir='rtl'] #asset-selection-app-bar button svg,
+[dir='rtl'] button[data-back-button] svg {
+  transform: scaleX(-1);
+}
+
+/* Fix JalaliDatePicker z-index and pointer events - minimal CSS to avoid breaking styles */
+/* Only fix z-index and pointer-events, don't override other styles */
+body > div[class*="jdp"]:not([class*="jdp-hidden"]),
+body > div[class*="jalali"]:not([class*="jdp-hidden"]) {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+body > div[class*="jdp"]:not([class*="jdp-hidden"]) *,
+body > div[class*="jalali"]:not([class*="jdp-hidden"]) * {
+  pointer-events: auto !important;
+}
 
   :root.dark {
     color-scheme: dark;
@@ -170,4 +280,21 @@
   .maplibregl-popup-content {
     @apply bg-subtle rounded-lg;
   }
+}
+
+/* Fix JalaliDatePicker z-index and pointer events - minimal CSS to avoid breaking styles */
+/* Only fix z-index and pointer-events, don't override other styles */
+jdp-container {
+  pointer-events: auto !important;
+}
+
+body > div[class*="jdp"]:not([class*="jdp-hidden"]),
+body > div[class*="jalali"]:not([class*="jdp-hidden"]) {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+body > div[class*="jdp"]:not([class*="jdp-hidden"]) *,
+body > div[class*="jalali"]:not([class*="jdp-hidden"]) * {
+  pointer-events: auto !important;
 }

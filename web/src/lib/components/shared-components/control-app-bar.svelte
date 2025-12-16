@@ -88,6 +88,7 @@
           variant="ghost"
           icon={backIcon}
           size="large"
+          data-back-button="true"
         />
       {/if}
       {@render leading?.()}

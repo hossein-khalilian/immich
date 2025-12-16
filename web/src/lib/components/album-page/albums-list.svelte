@@ -19,6 +19,7 @@
     AlbumViewMode,
     SortOrder,
     locale,
+    lang,
     type AlbumViewSettings,
   } from '$lib/stores/preferences.store';
   import { user } from '$lib/stores/user.store';
@@ -33,6 +34,8 @@
   import { groupBy } from 'lodash-es';
   import { onMount, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
+  import { get } from 'svelte/store';
+  import { convertDigitsToPersian } from '$lib/utils/timeline-util';
 
   interface Props {
     ownedAlbums?: AlbumResponseDto[];
@@ -76,10 +79,56 @@
     [AlbumGroupBy.Year]: (order, albums): AlbumGroup[] => {
       const unknownYear = $t('unknown_year');
       const useStartDate = userSettings.sortBy === AlbumSortBy.OldestPhoto;
+      const currentLang = get(lang);
+      const isPersian = currentLang === 'fa';
 
+      // Helper function to get Persian year from a date
+      const getPersianYearFromDate = (dateString: string): number | string => {
+        try {
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) {
+            return unknownYear;
+          }
+          
+          if (isPersian) {
+            // Convert to Persian year
+            const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+              year: 'numeric',
+              calendar: 'persian'
+            });
+            const parts = formatter.formatToParts(date);
+            const yearPart = parts.find(part => part.type === 'year');
+            if (yearPart && yearPart.value) {
+              // Convert Persian/Arabic digits to Latin
+              const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+              const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+              let latinDigits = yearPart.value;
+              for (let i = 0; i < 10; i++) {
+                latinDigits = latinDigits.replace(new RegExp(persianDigits[i], 'g'), i.toString());
+                latinDigits = latinDigits.replace(new RegExp(arabicDigits[i], 'g'), i.toString());
+              }
+              const persianYear = parseInt(latinDigits.replace(/[^0-9]/g, ''), 10);
+              if (!isNaN(persianYear) && persianYear > 0 && persianYear < 10000) {
+                return persianYear;
+              }
+            }
+          }
+          
+          // Fallback to Gregorian year
+          return date.getFullYear();
+        } catch (error) {
+          console.warn('Error converting to Persian year:', error);
+          return unknownYear;
+        }
+      };
+
+      // Group by Persian year (or Gregorian if not Persian locale)
       const groupedByYear = groupBy(albums, (album) => {
         const date = useStartDate ? album.startDate : album.endDate;
-        return date ? new Date(date).getFullYear() : unknownYear;
+        if (!date) {
+          return unknownYear;
+        }
+        return getPersianYearFromDate(date);
       });
 
       const sortSign = order === SortOrder.Desc ? -1 : 1;
@@ -90,15 +139,28 @@
         } else if (b === unknownYear) {
           return -1;
         } else {
-          return (Number.parseInt(a) - Number.parseInt(b)) * sortSign;
+          // Sort by year (both Persian and Gregorian are numbers)
+          const yearA = typeof a === 'string' ? Number.parseInt(a, 10) : a;
+          const yearB = typeof b === 'string' ? Number.parseInt(b, 10) : b;
+          if (isNaN(yearA) || isNaN(yearB)) {
+            return 0;
+          }
+          return (yearA - yearB) * sortSign;
         }
       });
 
-      return sortedByYear.map(([year, albums]) => ({
-        id: year,
-        name: year,
-        albums,
-      }));
+      return sortedByYear.map(([year, albums]) => {
+        // Convert to Persian digits if locale is Persian
+        let finalDisplayYear = year.toString();
+        if (isPersian && year !== unknownYear) {
+          finalDisplayYear = convertDigitsToPersian(year);
+        }
+        return {
+          id: year.toString(),
+          name: finalDisplayYear,
+          albums,
+        };
+      });
     },
 
     /** Group by owner */

@@ -15,6 +15,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180.png" />
     <link rel="preload" as="font" type="font/ttf" href="%app.font%" crossorigin="anonymous" />
     <link rel="preload" as="font" type="font/ttf" href="%app.monofont%" crossorigin="anonymous" />
+    <!-- JalaliDatePicker for Persian date inputs -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/majidh1/JalaliDatePicker@latest/dist/jalalidatepicker.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/majidh1/JalaliDatePicker@latest/dist/jalalidatepicker.min.js"></script>
     %sveltekit.head%
     <style>
       /* prevent FOUC */
@@ -71,6 +74,22 @@
        * Prevent FOUC on page load.
        */
       const colorThemeKeyName = 'color-theme';
+      const langKeyName = 'lang';
+
+      // Set RTL direction from localStorage if available
+      // Default to Persian (fa) if no language is set
+      let savedLang = localStorage.getItem(langKeyName);
+      if (!savedLang || savedLang === 'en' || savedLang === 'null') {
+        savedLang = 'fa';
+        localStorage.setItem(langKeyName, 'fa');
+      }
+      if (savedLang === 'fa' || savedLang === 'ar' || savedLang === 'he' || savedLang === 'ur' || savedLang === 'az' || savedLang === 'kmr') {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.body?.setAttribute('dir', 'rtl');
+      } else {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.body?.setAttribute('dir', 'ltr');
+      }
 
       let theme = localStorage.getItem(colorThemeKeyName);
       if (!theme) {

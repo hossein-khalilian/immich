@@ -4,6 +4,7 @@
   import ApiKeySecretModal from '$lib/modals/ApiKeySecretModal.svelte';
   import ApiKeyUpdateModal from '$lib/modals/ApiKeyUpdateModal.svelte';
   import { locale } from '$lib/stores/preferences.store';
+  import { formatDateWithCalendar } from '$lib/utils/date-locale';
   import { handleError } from '$lib/utils/handle-error';
   import { deleteApiKey, getApiKeys, type ApiKeyResponseDto } from '@immich/sdk';
   import { Button, IconButton, modalManager, toastManager } from '@immich/ui';
@@ -88,7 +89,7 @@
                 title={JSON.stringify(key.permissions, undefined, 2)}>{key.permissions}</td
               >
               <td class="w-1/4 text-ellipsis px-4 text-sm overflow-hidden"
-                >{new Date(key.createdAt).toLocaleDateString($locale, dateFormats.settings)}
+                >{formatDateWithCalendar(new Date(key.createdAt), dateFormats.settings)}
               </td>
               <td class="flex flex-row flex-wrap justify-center gap-x-2 gap-y-1 w-1/4">
                 <IconButton

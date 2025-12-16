@@ -79,11 +79,13 @@ export const dateFormats = {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    // Calendar will be set dynamically based on locale
   },
   settings: <Intl.DateTimeFormatOptions>{
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    // Calendar will be set dynamically based on locale
   },
 };
 
@@ -290,7 +292,7 @@ interface Lang {
   weblateCode?: string;
 }
 
-export const defaultLang: Lang = { name: 'English', code: 'en', loader: () => import('$i18n/en.json') };
+export const defaultLang: Lang = { name: 'Persian', code: 'fa', loader: () => import('$i18n/fa.json'), rtl: true };
 
 export const langs: Lang[] = [
   { name: 'Afrikaans', code: 'af', loader: () => import('$i18n/af.json') },
@@ -306,13 +308,13 @@ export const langs: Lang[] = [
   { name: 'Chuvash', code: 'cv', loader: () => import('$i18n/cv.json') },
   { name: 'Danish', code: 'da', loader: () => import('$i18n/da.json') },
   { name: 'German', code: 'de', loader: () => import('$i18n/de.json') },
+  { name: 'English', code: 'en', loader: () => import('$i18n/en.json') },
   defaultLang,
   { name: 'Greek', code: 'el', loader: () => import('$i18n/el.json') },
   { name: 'Esperanto', code: 'eo', loader: () => import('$i18n/eo.json') },
   { name: 'Spanish', code: 'es', loader: () => import('$i18n/es.json') },
   { name: 'Estonian', code: 'et', loader: () => import('$i18n/et.json') },
   { name: 'Basque', code: 'eu', loader: () => import('$i18n/eu.json') },
-  { name: 'Persian', code: 'fa', loader: () => import('$i18n/fa.json'), rtl: true },
   { name: 'Finnish', code: 'fi', loader: () => import('$i18n/fi.json') },
   { name: 'Filipino', code: 'fil', loader: () => import('$i18n/fil.json') },
   { name: 'French', code: 'fr', loader: () => import('$i18n/fr.json') },

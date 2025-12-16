@@ -2,10 +2,13 @@
   import SettingSelect from '$lib/components/shared-components/settings/setting-select.svelte';
   import DateInput from '$lib/elements/DateInput.svelte';
   import type { MapSettings } from '$lib/stores/preferences.store';
+  import { jalaliToGregorian } from '$lib/utils/jalali-converter';
+  import { lang } from '$lib/stores/preferences.store';
   import { Button, Field, HStack, Modal, ModalBody, ModalFooter, Stack, Switch } from '@immich/ui';
   import { Duration } from 'luxon';
   import { t } from 'svelte-i18n';
   import { fly } from 'svelte/transition';
+  import { get } from 'svelte/store';
 
   interface Props {
     settings: MapSettings;
@@ -19,7 +22,29 @@
 
   const onsubmit = (event: Event) => {
     event.preventDefault();
-    onClose(settings);
+    
+    // Convert Jalali dates to Gregorian before closing if language is Persian
+    const currentLang = get(lang);
+    const convertedSettings = { ...settings };
+    
+    if (currentLang === 'fa') {
+      if (convertedSettings.dateAfter && convertedSettings.dateAfter.includes('/')) {
+        try {
+          convertedSettings.dateAfter = jalaliToGregorian(convertedSettings.dateAfter);
+        } catch (error) {
+          console.error('Error converting Jalali dateAfter to Gregorian:', error);
+        }
+      }
+      if (convertedSettings.dateBefore && convertedSettings.dateBefore.includes('/')) {
+        try {
+          convertedSettings.dateBefore = jalaliToGregorian(convertedSettings.dateBefore);
+        } catch (error) {
+          console.error('Error converting Jalali dateBefore to Gregorian:', error);
+        }
+      }
+    }
+    
+    onClose(convertedSettings);
   };
 </script>
 

@@ -4,11 +4,14 @@
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import { getPreferredTimeZone, getTimezones, toIsoDate } from '$lib/modals/timezone-utils';
   import { handleError } from '$lib/utils/handle-error';
+  import { jalaliDateTimeToGregorian } from '$lib/utils/jalali-converter';
+  import { lang } from '$lib/stores/preferences.store';
   import { updateAsset } from '@immich/sdk';
   import { Button, HStack, Label, Modal, ModalBody, ModalFooter } from '@immich/ui';
   import { mdiCalendarEdit } from '@mdi/js';
   import { DateTime } from 'luxon';
   import { t } from 'svelte-i18n';
+  import { get } from 'svelte/store';
 
   interface Props {
     initialDate?: DateTime;
@@ -34,8 +37,19 @@
       return;
     }
 
+    // Convert Jalali datetime to Gregorian if language is Persian
+    let dateToUse = selectedDate;
+    const currentLang = get(lang);
+    if (currentLang === 'fa' && selectedDate && selectedDate.includes('/')) {
+      try {
+        dateToUse = jalaliDateTimeToGregorian(selectedDate);
+      } catch (error) {
+        console.error('Error converting Jalali datetime to Gregorian:', error);
+      }
+    }
+
     // Get the local date/time components from the selected string using neutral timezone
-    const isoDate = toIsoDate(selectedDate, selectedOption);
+    const isoDate = toIsoDate(dateToUse, selectedOption);
     try {
       await updateAsset({ id: asset.id, updateAssetDto: { dateTimeOriginal: isoDate } });
       onClose(true);

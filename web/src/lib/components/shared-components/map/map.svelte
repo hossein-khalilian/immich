@@ -16,6 +16,7 @@
   import MapSettingsModal from '$lib/modals/MapSettingsModal.svelte';
   import { mapSettings } from '$lib/stores/preferences.store';
   import { getAssetThumbnailUrl, handlePromiseError } from '$lib/utils';
+  import { jalaliToGregorian } from '$lib/utils/jalali-converter';
   import { getMapMarkers, type MapMarkerResponseDto } from '@immich/sdk';
   import { Icon, modalManager } from '@immich/ui';
   import { mdiCog, mdiMap, mdiMapMarker } from '@mdi/js';
@@ -190,9 +191,31 @@
     }
 
     try {
+      // Convert Jalali to Gregorian if needed (should already be converted, but double-check)
+      let gregorianDateAfter = dateAfter;
+      let gregorianDateBefore = dateBefore;
+      
+      if (dateAfter && dateAfter.includes('/') && !dateAfter.includes('T')) {
+        // It's a Jalali date (YYYY/MM/DD format) - convert to Gregorian
+        try {
+          gregorianDateAfter = jalaliToGregorian(dateAfter);
+        } catch (error) {
+          console.error('Error converting Jalali dateAfter to Gregorian:', error);
+        }
+      }
+      
+      if (dateBefore && dateBefore.includes('/') && !dateBefore.includes('T')) {
+        // It's a Jalali date (YYYY/MM/DD format) - convert to Gregorian
+        try {
+          gregorianDateBefore = jalaliToGregorian(dateBefore);
+        } catch (error) {
+          console.error('Error converting Jalali dateBefore to Gregorian:', error);
+        }
+      }
+      
       return {
-        fileCreatedAfter: dateAfter ? new Date(dateAfter).toISOString() : undefined,
-        fileCreatedBefore: dateBefore ? new Date(dateBefore).toISOString() : undefined,
+        fileCreatedAfter: gregorianDateAfter ? new Date(gregorianDateAfter).toISOString() : undefined,
+        fileCreatedBefore: gregorianDateBefore ? new Date(gregorianDateBefore).toISOString() : undefined,
       };
     } catch {
       $mapSettings.dateAfter = '';

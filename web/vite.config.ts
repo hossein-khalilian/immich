@@ -7,11 +7,20 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type ProxyOptions, type UserConfig } from 'vite';
 
 const upstream = {
-  target: process.env.IMMICH_SERVER_URL || 'http://immich-server:2283/',
-  secure: true,
+  target: process.env.IMMICH_SERVER_URL || 'http://localhost:2283/',
+  secure: false, // Set to false for local development
   changeOrigin: true,
   logLevel: 'info',
   ws: true,
+  // Allow self-signed certificates for local development
+  configure: (proxy, _options) => {
+    proxy.on('error', (err, _req, _res) => {
+      console.log('Proxy error:', err);
+    });
+    proxy.on('proxyReq', (proxyReq, req, _res) => {
+      console.log('Proxying:', req.method, req.url, '->', proxyReq.getHeader('host'));
+    });
+  },
 };
 
 const proxy: Record<string, string | ProxyOptions> = {

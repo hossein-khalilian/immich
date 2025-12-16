@@ -20,4 +20,5 @@
   icon={mdiArrowLeft}
   aria-label={$t('go_back')}
   onclick={onClose}
+  data-back-button="true"
 />

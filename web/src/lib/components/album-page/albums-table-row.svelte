@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { AppRoute, dateFormats } from '$lib/constants';
   import { locale } from '$lib/stores/preferences.store';
+  import { formatDateWithCalendar } from '$lib/utils/date-locale';
   import { user } from '$lib/stores/user.store';
   import type { ContextMenuPosition } from '$lib/utils/context-menu';
   import type { AlbumResponseDto } from '@immich/sdk';
@@ -22,7 +23,7 @@
   };
 
   const dateLocaleString = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString($locale, dateFormats.album);
+    return formatDateWithCalendar(new Date(dateString), dateFormats.album);
   };
 
   const oncontextmenu = (event: MouseEvent) => {

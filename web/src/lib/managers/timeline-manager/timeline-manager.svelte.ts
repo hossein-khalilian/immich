@@ -16,6 +16,7 @@ import { WebsocketSupport } from '$lib/managers/timeline-manager/internal/websoc
 import { CancellableTask } from '$lib/utils/cancellable-task';
 import { PersistedLocalStorage } from '$lib/utils/persisted';
 import {
+  getPersianYear,
   isAssetResponseDto,
   setDifference,
   toTimelineAsset,
@@ -305,13 +306,17 @@ export class TimelineManager extends VirtualScrollManager {
   }
 
   #createScrubberMonths() {
-    this.scrubberMonths = this.months.map((month) => ({
-      assetCount: month.assetsCount,
-      year: month.yearMonth.year,
-      month: month.yearMonth.month,
-      title: month.monthGroupTitle,
-      height: month.height,
-    }));
+    // Keep original Gregorian years for internal logic
+    // Persian year conversion will be done only for display purposes
+    this.scrubberMonths = this.months.map((month) => {
+      return {
+        assetCount: month.assetsCount,
+        year: month.yearMonth.year, // Keep Gregorian year for logic
+        month: month.yearMonth.month,
+        title: month.monthGroupTitle,
+        height: month.height,
+      };
+    });
     this.scrubberTimelineHeight = this.totalViewerHeight;
   }
 

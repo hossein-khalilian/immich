@@ -270,7 +270,8 @@ class MainWidget extends StatelessWidget {
       supportedLocales: locales.values.toList(),
       path: translationsPath,
       useFallbackTranslations: true,
-      fallbackLocale: locales.values.first,
+      startLocale: const Locale('fa'),
+      fallbackLocale: const Locale('fa'),
       assetLoader: const CodegenLoader(),
       child: const ImmichApp(),
     );

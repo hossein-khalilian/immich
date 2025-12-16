@@ -1,4 +1,5 @@
 import { DateTime, Duration } from 'luxon';
+import { jalaliToGregorian } from '$lib/utils/jalali-converter';
 
 export type ZoneOption = {
   /**
@@ -129,7 +130,23 @@ export function getPreferredTimeZone(
 }
 
 export function toDatetime(selectedDate: string, selectedZone: ZoneOption) {
-  const dtComponents = DateTime.fromISO(selectedDate, { zone: 'utc' });
+  // Convert Jalali to Gregorian if needed (for datetime-local inputs in Persian mode)
+  let dateString = selectedDate;
+  // Check if it's Jalali format (contains /) - this happens when Persian datepicker is used
+  if (dateString.includes('/') && dateString.includes('T')) {
+    // It's datetime-local format with Jalali date part
+    const [datePart, timePart] = dateString.split('T');
+    if (datePart && datePart.includes('/')) {
+      try {
+        const gregorianDate = jalaliToGregorian(datePart);
+        dateString = `${gregorianDate}T${timePart}`;
+      } catch (error) {
+        console.error('Error converting Jalali datetime to Gregorian:', error);
+      }
+    }
+  }
+  
+  const dtComponents = DateTime.fromISO(dateString, { zone: 'utc' });
 
   // Determine the modern, DST-aware offset for the selected IANA zone
   const { offsetMinutes } = getModernOffsetForZoneAndDate(selectedZone.value, selectedDate);

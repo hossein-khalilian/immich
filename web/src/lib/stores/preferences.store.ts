@@ -1,6 +1,4 @@
-import { browser } from '$app/environment';
 import { Theme, defaultLang } from '$lib/constants';
-import { getPreferredLocale } from '$lib/utils/i18n';
 import { persisted } from 'svelte-persisted-store';
 
 export interface ThemeSetting {
@@ -9,17 +7,35 @@ export interface ThemeSetting {
 }
 
 // Locale to use for formatting dates, numbers, etc.
+// Default to Persian locale with Persian calendar
 export const locale = persisted<string | undefined>('locale', 'default', {
   serializer: {
-    parse: (text) => text || 'default',
-    stringify: (object) => object ?? '',
+    parse: (text) => {
+      // If default or empty, use Persian
+      if (!text || text === 'default') {
+        return 'fa-IR-u-ca-persian';
+      }
+      // If already Persian but without calendar, add it
+      if (text === 'fa' || text === 'fa-IR') {
+        return 'fa-IR-u-ca-persian';
+      }
+      return text;
+    },
+    stringify: (object) => object ?? 'default',
   },
 });
 
-const preferredLocale = browser ? getPreferredLocale() : undefined;
-export const lang = persisted<string>('lang', preferredLocale || defaultLang.code, {
+// Always use defaultLang.code as the default, ignoring browser preference
+// Migration: if stored value is 'en' (old default), migrate to 'fa' (new default)
+export const lang = persisted<string>('lang', defaultLang.code, {
   serializer: {
-    parse: (text) => text,
+    parse: (text) => {
+      // Migrate from old default 'en' to new default 'fa'
+      if (text === 'en') {
+        return defaultLang.code;
+      }
+      return text || defaultLang.code;
+    },
     stringify: (object) => object ?? '',
   },
 });

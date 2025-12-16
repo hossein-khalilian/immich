@@ -10,6 +10,7 @@
   import UploadPanel from '$lib/components/shared-components/upload-panel.svelte';
   import { AppRoute } from '$lib/constants';
   import { eventManager } from '$lib/managers/event-manager.svelte';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import { serverConfigManager } from '$lib/managers/server-config-manager.svelte';
   import { themeManager } from '$lib/managers/theme-manager.svelte';
   import ServerRestartingModal from '$lib/modals/ServerRestartingModal.svelte';

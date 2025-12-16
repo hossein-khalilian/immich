@@ -1,5 +1,5 @@
 import { dateFormats } from '$lib/constants';
-import { locale } from '$lib/stores/preferences.store';
+import { locale, lang } from '$lib/stores/preferences.store';
 import { DateTime, Duration } from 'luxon';
 import { get } from 'svelte/store';
 
@@ -23,11 +23,23 @@ export const getShortDateRange = (startDate: string | Date, endDate: string | Da
   startDate = startDate instanceof Date ? startDate : new Date(startDate);
   endDate = endDate instanceof Date ? endDate : new Date(endDate);
 
-  const userLocale = get(locale);
-  const endDateLocalized = endDate.toLocaleString(userLocale, {
+  const currentLang = get(lang);
+  let userLocale = get(locale);
+  const isPersian = currentLang === 'fa';
+  // Use Persian calendar only if language is Persian (fa)
+  if (isPersian) {
+    userLocale = 'fa-IR-u-ca-persian';
+  } else {
+    userLocale = userLocale || 'en';
+  }
+  
+  const dateOptions: Intl.DateTimeFormatOptions = {
     month: 'short',
     year: 'numeric',
-  });
+    calendar: isPersian ? 'persian' : undefined,
+  };
+  
+  const endDateLocalized = endDate.toLocaleString(userLocale, dateOptions);
 
   if (startDate.getFullYear() === endDate.getFullYear()) {
     if (startDate.getMonth() === endDate.getMonth()) {
@@ -37,18 +49,13 @@ export const getShortDateRange = (startDate: string | Date, endDate: string | Da
     } else {
       // Same year but different month.
       // e.g.: jul. - sept. 2024
-      const startMonthLocalized = startDate.toLocaleString(userLocale, {
-        month: 'short',
-      });
+      const startMonthLocalized = startDate.toLocaleString(userLocale, dateOptions);
       return `${startMonthLocalized} - ${endDateLocalized}`;
     }
   } else {
     // Different year.
     // e.g.: feb. 2021 - sept. 2024
-    const startDateLocalized = startDate.toLocaleString(userLocale, {
-      month: 'short',
-      year: 'numeric',
-    });
+    const startDateLocalized = startDate.toLocaleString(userLocale, dateOptions);
     return `${startDateLocalized} - ${endDateLocalized}`;
   }
 };
@@ -60,7 +67,22 @@ const formatDate = (date?: string) => {
 
   // without timezone
   const localDate = date.replace(/Z$/, '').replace(/\+.+$/, '');
-  return localDate ? new Date(localDate).toLocaleDateString(get(locale), dateFormats.album) : undefined;
+  const currentLang = get(lang);
+  let userLocale = get(locale);
+  const isPersian = currentLang === 'fa';
+  // Use Persian calendar only if language is Persian (fa)
+  if (isPersian) {
+    userLocale = 'fa-IR-u-ca-persian';
+  } else {
+    userLocale = userLocale || 'en';
+  }
+  
+  const formatOptions: Intl.DateTimeFormatOptions = { 
+    ...dateFormats.album,
+    calendar: isPersian ? 'persian' : undefined,
+  };
+  
+  return localDate ? new Date(localDate).toLocaleDateString(userLocale, formatOptions) : undefined;
 };
 
 export const getAlbumDateRange = (album: { startDate?: string; endDate?: string }) => {

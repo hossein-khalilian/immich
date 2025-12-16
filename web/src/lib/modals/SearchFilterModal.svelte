@@ -34,10 +34,13 @@
   import { preferences } from '$lib/stores/user.store';
   import { parseUtcDate } from '$lib/utils/date-time';
   import { generateId } from '$lib/utils/generate-id';
+  import { jalaliToGregorian } from '$lib/utils/jalali-converter';
+  import { lang } from '$lib/stores/preferences.store';
   import { AssetTypeEnum, AssetVisibility, type MetadataSearchDto, type SmartSearchDto } from '@immich/sdk';
   import { Button, HStack, Modal, ModalBody, ModalFooter } from '@immich/ui';
   import { mdiTune } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import { get } from 'svelte/store';
   import { SvelteSet } from 'svelte/reactivity';
 
   interface Props {
@@ -47,7 +50,25 @@
 
   let { searchQuery, onClose }: Props = $props();
 
-  const parseOptionalDate = (dateString?: string) => (dateString ? parseUtcDate(dateString) : undefined);
+  const parseOptionalDate = (dateString?: string) => {
+    if (!dateString) return undefined;
+    
+    // Check if language is Persian and date is in Jalali format (contains /)
+    const currentLang = get(lang);
+    if (currentLang === 'fa' && dateString.includes('/')) {
+      // Convert Jalali date to Gregorian before parsing
+      try {
+        const gregorianDate = jalaliToGregorian(dateString);
+        return parseUtcDate(gregorianDate);
+      } catch (error) {
+        console.error('Error converting Jalali to Gregorian in search:', error);
+        // Fallback to original parsing
+        return parseUtcDate(dateString);
+      }
+    }
+    
+    return parseUtcDate(dateString);
+  };
   const toStartOfDayDate = (dateString: string) => parseUtcDate(dateString)?.startOf('day').toISODate() || undefined;
   const formId = generateId();
 

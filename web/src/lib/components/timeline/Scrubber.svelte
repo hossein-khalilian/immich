@@ -1,12 +1,15 @@
 <script lang="ts">
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import type { ScrubberMonth, ViewportTopMonth } from '$lib/managers/timeline-manager/types';
+  import { locale } from '$lib/stores/preferences.store';
   import { mobileDevice } from '$lib/stores/mobile-device.svelte';
   import { getTabbable } from '$lib/utils/focus-util';
-  import { type ScrubberListener } from '$lib/utils/timeline-util';
+  import { type ScrubberListener, convertDigitsToPersian, getPersianYear } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
   import { mdiPlay } from '@mdi/js';
+  import { DateTime } from 'luxon';
   import { clamp } from 'lodash-es';
+  import { get } from 'svelte/store';
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
 
@@ -160,8 +163,8 @@
         count: scrubMonth.assetCount,
         height: toScrollY(scrollBarPercentage),
         dateFormatted: scrubMonth.title,
-        year: scrubMonth.year,
-        month: scrubMonth.month,
+        year: scrubMonth.year || 0, // Ensure year is always a number
+        month: scrubMonth.month || 0, // Ensure month is always a number
         hasLabel: false,
         hasDot: false,
       };
@@ -578,18 +581,27 @@
     data-label={segments.at(0)?.dateFormatted}
   ></div>
   <!-- Time Segment -->
-  {#each segments as segment (segment.year + '-' + segment.month)}
+  {#each segments as segment ((segment.year || 0) + '-' + (segment.month || 0))}
     <div
       class="relative"
       data-id="time-segment"
-      data-segment-year-month={segment.year + '-' + segment.month}
+      data-segment-year-month={(segment.year || 0) + '-' + (segment.month || 0)}
       data-label={segment.dateFormatted}
       style:height={segment.height + 'px'}
     >
       {#if !usingMobileDevice}
         {#if segment.hasLabel}
           <div class="absolute end-5 text-[12px] dark:text-immich-dark-fg font-immich-mono bottom-0">
-            {segment.year}
+            {(() => {
+              const userLocale = get(locale);
+              if (userLocale && (userLocale === 'default' || userLocale.startsWith('fa'))) {
+                // Convert Gregorian year to Persian for display
+                const persianYear = getPersianYear({ year: segment.year, month: segment.month });
+                // Convert digits to Persian
+                return convertDigitsToPersian(persianYear);
+              }
+              return segment.year;
+            })()}
           </div>
         {/if}
         {#if segment.hasDot}

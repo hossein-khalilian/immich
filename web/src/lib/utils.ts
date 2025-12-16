@@ -1,6 +1,6 @@
 import { defaultLang, langs, locales } from '$lib/constants';
 import { authManager } from '$lib/managers/auth-manager.svelte';
-import { lang } from '$lib/stores/preferences.store';
+import { lang, locale as localeStore } from '$lib/stores/preferences.store';
 import { handleError } from '$lib/utils/handle-error';
 import {
   AssetJobName,
@@ -43,7 +43,12 @@ interface DateFormatter {
 }
 
 export const initLanguage = async () => {
-  const preferenceLang = get(lang);
+  let preferenceLang = get(lang);
+  // Ensure Persian is default if no language is set or if it's 'en' (old default)
+  if (!preferenceLang || preferenceLang === 'en') {
+    preferenceLang = defaultLang.code;
+  }
+  
   for (const { code, loader } of langs) {
     register(code, loader);
   }
@@ -352,28 +357,36 @@ export const withError = async <T>(fn: () => Promise<T>): Promise<[undefined, T]
 export const decodeBase64 = (data: string) => Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
 
 export function createDateFormatter(localeCode: string | undefined): DateFormatter {
+  // Get current language to check if Persian
+  const currentLang = get(lang);
+  // Use Persian calendar only if language is Persian (fa)
+  const usePersianCalendar = currentLang === 'fa';
+  const finalLocale = usePersianCalendar ? 'fa-IR-u-ca-persian' : (localeCode || 'en');
+  
   return {
     formatDate: (date: Date): string =>
-      date.toLocaleString(localeCode, {
+      date.toLocaleString(finalLocale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
+        calendar: usePersianCalendar ? 'persian' : undefined,
       }),
 
     formatTime: (date: Date): string =>
-      date.toLocaleString(localeCode, {
+      date.toLocaleString(finalLocale, {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
       }),
 
     formatDateTime: (date: Date): string => {
-      const formattedDate = date.toLocaleString(localeCode, {
+      const formattedDate = date.toLocaleString(finalLocale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
+        calendar: usePersianCalendar ? 'persian' : undefined,
       });
-      const formattedTime = date.toLocaleString(localeCode, {
+      const formattedTime = date.toLocaleString(finalLocale, {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
