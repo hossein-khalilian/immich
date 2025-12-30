@@ -25,6 +25,7 @@ services:
       context: ../
       dockerfile: server/Dockerfile.dev
       target: dev
+    pull_policy: build
     restart: unless-stopped
     volumes:
       - ..:/usr/src/app
@@ -77,6 +78,7 @@ services:
       context: ../
       dockerfile: server/Dockerfile.dev
       target: dev
+    pull_policy: build
     command: ['immich-web']
     env_file:
       - .env
@@ -112,6 +114,7 @@ services:
       dockerfile: Dockerfile
       args:
         - DEVICE=cpu # set to one of [armnn, cuda, rocm, openvino, openvino-wsl, rknn] for accelerated inference
+    pull_policy: build
     ports:
       - 3003:3003
     volumes:
