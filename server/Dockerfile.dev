@@ -14,6 +14,11 @@ COPY ./package* ./pnpm* .pnpmfile.cjs /tmp/create-dep-cache/
 COPY ./web/package* ./web/pnpm* /tmp/create-dep-cache/web/
 COPY ./server/package* ./server/pnpm* /tmp/create-dep-cache/server/
 COPY ./open-api/typescript-sdk/package* ./open-api/typescript-sdk/pnpm* /tmp/create-dep-cache/open-api/typescript-sdk/
+COPY ./cli/package*.json /tmp/create-dep-cache/cli/
+COPY ./docs/package*.json /tmp/create-dep-cache/docs/
+COPY ./e2e/package*.json /tmp/create-dep-cache/e2e/
+COPY ./plugins/package*.json /tmp/create-dep-cache/plugins/
+COPY ./.github/package*.json /tmp/create-dep-cache/.github/
 WORKDIR /tmp/create-dep-cache
 RUN pnpm fetch && rm -rf /tmp/create-dep-cache && chmod -R o+rw /buildcache
 WORKDIR /usr/src/app
