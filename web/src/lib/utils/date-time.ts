@@ -36,9 +36,12 @@ export const getShortDateRange = (startDate: string | Date, endDate: string | Da
   const dateOptions: Intl.DateTimeFormatOptions = {
     month: 'short',
     year: 'numeric',
-    calendar: isPersian ? 'persian' : undefined,
+    // The API returns the date in UTC. If the earliest asset was taken on Jan 1st at 1am,
+    // we expect the album to start in January, even if the local timezone is UTC-5 for instance.
+    timeZone: 'UTC',
+    ...(isPersian ? { calendar: 'persian' } : {}),
   };
-  
+
   const endDateLocalized = endDate.toLocaleString(userLocale, dateOptions);
 
   if (startDate.getFullYear() === endDate.getFullYear()) {
