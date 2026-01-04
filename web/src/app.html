@@ -76,12 +76,11 @@
       const colorThemeKeyName = 'color-theme';
       const langKeyName = 'lang';
 
-      // Set RTL direction from localStorage if available
-      // Default to Persian (fa) if no language is set
+      // Set RTL direction based on user preference, defaulting to Persian only when unset
       let savedLang = localStorage.getItem(langKeyName);
-      if (!savedLang || savedLang === 'en' || savedLang === 'null') {
+      if (!savedLang || savedLang === 'null' || savedLang === 'undefined') {
         savedLang = 'fa';
-        localStorage.setItem(langKeyName, 'fa');
+        localStorage.setItem(langKeyName, savedLang);
       }
       if (savedLang === 'fa' || savedLang === 'ar' || savedLang === 'he' || savedLang === 'ur' || savedLang === 'az' || savedLang === 'kmr') {
         document.documentElement.setAttribute('dir', 'rtl');

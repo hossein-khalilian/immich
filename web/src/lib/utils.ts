@@ -44,8 +44,8 @@ interface DateFormatter {
 
 export const initLanguage = async () => {
   let preferenceLang = get(lang);
-  // Ensure Persian is default if no language is set or if it's 'en' (old default)
-  if (!preferenceLang || preferenceLang === 'en') {
+  // Ensure Persian is default when no preference has been saved yet
+  if (!preferenceLang) {
     preferenceLang = defaultLang.code;
   }
   

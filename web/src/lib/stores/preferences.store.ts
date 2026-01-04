@@ -25,17 +25,10 @@ export const locale = persisted<string | undefined>('locale', 'default', {
   },
 });
 
-// Always use defaultLang.code as the default, ignoring browser preference
-// Migration: if stored value is 'en' (old default), migrate to 'fa' (new default)
+// Persist UI language preference; default is always the configured defaultLang
 export const lang = persisted<string>('lang', defaultLang.code, {
   serializer: {
-    parse: (text) => {
-      // Migrate from old default 'en' to new default 'fa'
-      if (text === 'en') {
-        return defaultLang.code;
-      }
-      return text || defaultLang.code;
-    },
+    parse: (text) => text || defaultLang.code,
     stringify: (object) => object ?? '',
   },
 });
