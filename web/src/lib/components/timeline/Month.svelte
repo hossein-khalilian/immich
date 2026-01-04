@@ -7,6 +7,7 @@
   import type { VirtualScrollManager } from '$lib/managers/VirtualScrollManager/VirtualScrollManager.svelte';
   import type { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
   import { uploadAssetsStore } from '$lib/stores/upload';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import type { CommonPosition } from '$lib/utils/layout-utils';
   import { fromTimelinePlainDate, getDateLocaleString } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
@@ -51,10 +52,13 @@
     });
     return getDateLocaleString(date);
   };
+
+  const isRtl = $derived(languageManager.rtl);
 </script>
 
 {#each filterIntersecting(monthGroup.dayGroups) as dayGroup, groupIndex (dayGroup.day)}
   {@const absoluteWidth = dayGroup.left}
+  {@const horizontalOffset = isRtl ? -absoluteWidth : absoluteWidth}
   {@const isDayGroupSelected = assetInteraction.selectedGroup.has(dayGroup.groupTitle)}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <section
@@ -64,7 +68,7 @@
     ]}
     data-group
     style:position="absolute"
-    style:transform={`translate3d(${absoluteWidth}px,${dayGroup.top}px,0)`}
+    style:transform={`translate3d(${horizontalOffset}px,${dayGroup.top}px,0)`}
     onmouseenter={() => (hoveredDayGroup = dayGroup.groupTitle)}
     onmouseleave={() => (hoveredDayGroup = null)}
   >
