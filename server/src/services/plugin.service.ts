@@ -157,6 +157,16 @@ export class PluginService extends BaseService {
       try {
         this.logger.debug(`Loading plugin: ${plugin.name} from ${plugin.wasmPath}`);
 
+        // Check if the WASM file exists before trying to load it
+        const fileExists = await this.storageRepository.checkFileExists(plugin.wasmPath);
+        if (!fileExists) {
+          this.logger.warn(
+            `Plugin ${plugin.name} WASM file not found at ${plugin.wasmPath}. Skipping plugin load. ` +
+              `This is expected in development if the plugin hasn't been built. Run 'pnpm build' in the plugins directory to build it.`,
+          );
+          continue;
+        }
+
         const extismPlugin = await newPlugin(plugin.wasmPath, {
           useWasi: true,
           functions: this.hostFunctions.getHostFunctions(),
