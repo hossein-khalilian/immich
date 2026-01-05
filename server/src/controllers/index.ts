@@ -1,5 +1,6 @@
 import { ActivityController } from 'src/controllers/activity.controller';
 import { AlbumController } from 'src/controllers/album.controller';
+import { FolderController } from 'src/controllers/folder.controller';
 import { ApiKeyController } from 'src/controllers/api-key.controller';
 import { AppController } from 'src/controllers/app.controller';
 import { AssetMediaController } from 'src/controllers/asset-media.controller';
@@ -41,6 +42,7 @@ export const controllers = [
   ApiKeyController,
   ActivityController,
   AlbumController,
+  FolderController,
   AppController,
   AssetController,
   AssetMediaController,

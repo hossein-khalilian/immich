@@ -17,14 +17,25 @@ export const isSharedLinkRoute = (route?: string | null) =>
   !!route?.startsWith('/(user)/share/[key]') || !!route?.startsWith('/(user)/s/[slug]');
 export const isSearchRoute = (route?: string | null) => !!route?.startsWith('/(user)/search');
 export const isAlbumsRoute = (route?: string | null) => !!route?.startsWith('/(user)/albums/[albumId=id]');
+export const isFoldersRoute = (route?: string | null) => !!route?.startsWith('/(user)/folders/[folderId=id]');
 export const isPeopleRoute = (route?: string | null) => !!route?.startsWith('/(user)/people/[personId]');
 export const isLockedFolderRoute = (route?: string | null) => !!route?.startsWith('/(user)/locked');
 
 export const isAssetViewerRoute = (target?: NavigationTarget | null) =>
   !!(target?.route.id?.endsWith('/[[assetId=id]]') && 'assetId' in (target?.params || {}));
 
-export function getAssetInfoFromParam({ assetId, slug, key }: { assetId?: string; key?: string; slug?: string }) {
-  return assetId ? getAssetInfo({ id: assetId, slug, key }) : undefined;
+export async function getAssetInfoFromParam({ assetId, slug, key }: { assetId?: string; key?: string; slug?: string }) {
+  if (!assetId) {
+    return undefined;
+  }
+  try {
+    return await getAssetInfo({ id: assetId, slug, key });
+  } catch (error) {
+    // If asset is not found or user doesn't have access, return undefined instead of throwing
+    // This allows pages to load even when the asset ID in the URL is invalid
+    console.warn('Failed to load asset info:', error);
+    return undefined;
+  }
 }
 
 function currentUrlWithoutAsset() {

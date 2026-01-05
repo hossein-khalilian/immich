@@ -9,6 +9,8 @@ import { AccessRepository } from 'src/repositories/access.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository';
 import { AlbumRepository } from 'src/repositories/album.repository';
+import { FolderUserRepository } from 'src/repositories/folder-user.repository';
+import { FolderRepository } from 'src/repositories/folder.repository';
 import { ApiKeyRepository } from 'src/repositories/api-key.repository';
 import { AppRepository } from 'src/repositories/app.repository';
 import { AssetJobRepository } from 'src/repositories/asset-job.repository';
@@ -66,6 +68,8 @@ export const BASE_SERVICE_DEPENDENCIES = [
   ActivityRepository,
   AlbumRepository,
   AlbumUserRepository,
+  FolderRepository,
+  FolderUserRepository,
   ApiKeyRepository,
   AppRepository,
   AssetRepository,
@@ -124,6 +128,8 @@ export class BaseService {
     protected activityRepository: ActivityRepository,
     protected albumRepository: AlbumRepository,
     protected albumUserRepository: AlbumUserRepository,
+    protected folderRepository: FolderRepository,
+    protected folderUserRepository: FolderUserRepository,
     protected apiKeyRepository: ApiKeyRepository,
     protected appRepository: AppRepository,
     protected assetRepository: AssetRepository,

@@ -125,6 +125,50 @@ class AlbumAccess {
   }
 }
 
+class FolderAccess {
+  constructor(private db: Kysely<DB>) {}
+
+  @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID_SET] })
+  @ChunkedSet({ paramIndex: 1 })
+  async checkOwnerAccess(userId: string, folderIds: Set<string>) {
+    if (folderIds.size === 0) {
+      return new Set<string>();
+    }
+
+    return this.db
+      .selectFrom('folder')
+      .select('folder.id')
+      .where('folder.id', 'in', [...folderIds])
+      .where('folder.ownerId', '=', userId)
+      .where('folder.deletedAt', 'is', null)
+      .execute()
+      .then((folders) => new Set(folders.map((folder) => folder.id)));
+  }
+
+  @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID_SET] })
+  @ChunkedSet({ paramIndex: 1 })
+  async checkSharedFolderAccess(userId: string, folderIds: Set<string>, access: AlbumUserRole) {
+    if (folderIds.size === 0) {
+      return new Set<string>();
+    }
+
+    const accessRole =
+      access === AlbumUserRole.Editor ? [AlbumUserRole.Editor] : [AlbumUserRole.Editor, AlbumUserRole.Viewer];
+
+    return this.db
+      .selectFrom('folder')
+      .select('folder.id')
+      .leftJoin('folder_user', 'folder_user.folderId', 'folder.id')
+      .leftJoin('user', (join) => join.onRef('user.id', '=', 'folder_user.userId').on('user.deletedAt', 'is', null))
+      .where('folder.id', 'in', [...folderIds])
+      .where('folder.deletedAt', 'is', null)
+      .where('user.id', '=', userId)
+      .where('folder_user.role', 'in', [...accessRole])
+      .execute()
+      .then((folders) => new Set(folders.map((folder) => folder.id)));
+  }
+}
+
 class AssetAccess {
   constructor(private db: Kysely<DB>) {}
 
@@ -488,6 +532,7 @@ export class AccessRepository {
   album: AlbumAccess;
   asset: AssetAccess;
   authDevice: AuthDeviceAccess;
+  folder: FolderAccess;
   memory: MemoryAccess;
   notification: NotificationAccess;
   person: PersonAccess;
@@ -503,6 +548,7 @@ export class AccessRepository {
     this.album = new AlbumAccess(db);
     this.asset = new AssetAccess(db);
     this.authDevice = new AuthDeviceAccess(db);
+    this.folder = new FolderAccess(db);
     this.memory = new MemoryAccess(db);
     this.notification = new NotificationAccess(db);
     this.person = new PersonAccess(db);

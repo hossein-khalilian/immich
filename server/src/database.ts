@@ -16,6 +16,7 @@ import {
 } from 'src/enum';
 import { AlbumTable } from 'src/schema/tables/album.table';
 import { AssetExifTable } from 'src/schema/tables/asset-exif.table';
+import { FolderTable } from 'src/schema/tables/folder.table';
 import { PluginActionTable, PluginFilterTable, PluginTable } from 'src/schema/tables/plugin.table';
 import { WorkflowActionTable, WorkflowFilterTable, WorkflowTable } from 'src/schema/tables/workflow.table';
 import { UserMetadataItem } from 'src/types';
@@ -31,6 +32,11 @@ export type AuthUser = {
 };
 
 export type AlbumUser = {
+  user: User;
+  role: AlbumUserRole;
+};
+
+export type FolderUser = {
   user: User;
   role: AlbumUserRole;
 };
@@ -193,6 +199,11 @@ export type SharedLink = {
 };
 
 export type Album = Selectable<AlbumTable> & {
+  owner: User;
+  assets: MapAsset[];
+};
+
+export type Folder = Selectable<FolderTable> & {
   owner: User;
   assets: MapAsset[];
 };

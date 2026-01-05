@@ -103,6 +103,21 @@ export const getAlbumDateRange = (album: { startDate?: string; endDate?: string 
   return '';
 };
 
+export const getFolderDateRange = (folder: { startDate?: string; endDate?: string }) => {
+  const start = formatDate(folder.startDate);
+  const end = formatDate(folder.endDate);
+
+  if (start && end && start !== end) {
+    return `${start} - ${end}`;
+  }
+
+  if (start) {
+    return start;
+  }
+
+  return '';
+};
+
 /**
  * Use this to convert from "5pm EST" to "5pm UTC"
  *

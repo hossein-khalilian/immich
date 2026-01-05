@@ -137,6 +137,55 @@ export const albumViewSettings = persisted<AlbumViewSettings>('album-view-settin
   collapsedGroups: {},
 });
 
+export interface FolderViewSettings {
+  view: string;
+  filter: string;
+  groupBy: string;
+  groupOrder: string;
+  sortBy: string;
+  sortOrder: string;
+  collapsedGroups: {
+    // Grouping Option => Array<Group ID>
+    [group: string]: string[];
+  };
+}
+
+export enum FolderViewMode {
+  Cover = 'Cover',
+  List = 'List',
+}
+
+export enum FolderFilter {
+  All = 'All',
+  Owned = 'Owned',
+  Shared = 'Shared',
+}
+
+export enum FolderGroupBy {
+  None = 'None',
+  Year = 'Year',
+  Owner = 'Owner',
+}
+
+export enum FolderSortBy {
+  Title = 'Title',
+  ItemCount = 'ItemCount',
+  DateModified = 'DateModified',
+  DateCreated = 'DateCreated',
+  MostRecentPhoto = 'MostRecentPhoto',
+  OldestPhoto = 'OldestPhoto',
+}
+
+export const folderViewSettings = persisted<FolderViewSettings>('folder-view-settings', {
+  view: FolderViewMode.Cover,
+  filter: FolderFilter.All,
+  groupBy: FolderGroupBy.Year,
+  groupOrder: SortOrder.Desc,
+  sortBy: FolderSortBy.MostRecentPhoto,
+  sortOrder: SortOrder.Desc,
+  collapsedGroups: {},
+});
+
 export enum PlacesGroupBy {
   None = 'None',
   Country = 'Country',
@@ -160,3 +209,4 @@ export const autoPlayVideo = persisted<boolean>('auto-play-video', true, {});
 export const alwaysLoadOriginalVideo = persisted<boolean>('always-load-original-video', false, {});
 
 export const recentAlbumsDropdown = persisted<boolean>('recent-albums-open', true, {});
+export const recentFoldersDropdown = persisted<boolean>('recent-folders-open', true, {});

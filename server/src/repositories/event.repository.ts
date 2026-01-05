@@ -42,6 +42,10 @@ type EventMap = {
   AlbumUpdate: [{ id: string; recipientId: string }];
   AlbumInvite: [{ id: string; userId: string }];
 
+  // folder events
+  FolderUpdate: [{ id: string; recipientId: string }];
+  FolderInvite: [{ id: string; userId: string }];
+
   // asset events
   AssetCreate: [{ asset: Asset }];
   AssetTag: [{ assetId: string }];

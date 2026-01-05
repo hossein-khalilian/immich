@@ -165,6 +165,64 @@ export const album_user_delete_audit = registerFunction({
     END`,
 });
 
+export const folder_user_after_insert = registerFunction({
+  name: 'folder_user_after_insert',
+  returnType: 'TRIGGER',
+  language: 'PLPGSQL',
+  body: `
+    BEGIN
+      UPDATE folder SET "updatedAt" = clock_timestamp(), "updateId" = immich_uuid_v7(clock_timestamp())
+      WHERE "id" IN (SELECT DISTINCT "folderId" FROM inserted_rows);
+      RETURN NULL;
+    END`,
+});
+
+export const folder_delete_audit = registerFunction({
+  name: 'folder_delete_audit',
+  returnType: 'TRIGGER',
+  language: 'PLPGSQL',
+  body: `
+    BEGIN
+      INSERT INTO folder_audit ("folderId", "userId")
+      SELECT "id", "ownerId"
+      FROM OLD;
+      RETURN NULL;
+    END`,
+});
+
+export const folder_asset_delete_audit = registerFunction({
+  name: 'folder_asset_delete_audit',
+  returnType: 'TRIGGER',
+  language: 'PLPGSQL',
+  body: `
+    BEGIN
+      INSERT INTO folder_asset_audit ("folderId", "assetId")
+      SELECT "folderId", "assetId" FROM OLD
+      WHERE "folderId" IN (SELECT "id" FROM folder WHERE "id" IN (SELECT "folderId" FROM OLD));
+      RETURN NULL;
+    END`,
+});
+
+export const folder_user_delete_audit = registerFunction({
+  name: 'folder_user_delete_audit',
+  returnType: 'TRIGGER',
+  language: 'PLPGSQL',
+  body: `
+    BEGIN
+      INSERT INTO folder_audit ("folderId", "userId")
+      SELECT "folderId", "userId"
+      FROM OLD;
+
+      IF pg_trigger_depth() = 1 THEN
+        INSERT INTO folder_user_audit ("folderId", "userId")
+        SELECT "folderId", "userId"
+        FROM OLD;
+      END IF;
+
+      RETURN NULL;
+    END`,
+});
+
 export const memory_delete_audit = registerFunction({
   name: 'memory_delete_audit',
   returnType: 'TRIGGER',

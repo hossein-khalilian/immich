@@ -2,6 +2,8 @@ import { AccessRepository } from 'src/repositories/access.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository';
 import { AlbumRepository } from 'src/repositories/album.repository';
+import { FolderUserRepository } from 'src/repositories/folder-user.repository';
+import { FolderRepository } from 'src/repositories/folder.repository';
 import { ApiKeyRepository } from 'src/repositories/api-key.repository';
 import { AppRepository } from 'src/repositories/app.repository';
 import { AssetJobRepository } from 'src/repositories/asset-job.repository';
@@ -55,6 +57,8 @@ export const repositories = [
   ActivityRepository,
   AlbumRepository,
   AlbumUserRepository,
+  FolderRepository,
+  FolderUserRepository,
   AuditRepository,
   ApiKeyRepository,
   AppRepository,

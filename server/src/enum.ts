@@ -122,6 +122,21 @@ export enum Permission {
   AlbumUserUpdate = 'albumUser.update',
   AlbumUserDelete = 'albumUser.delete',
 
+  FolderCreate = 'folder.create',
+  FolderRead = 'folder.read',
+  FolderUpdate = 'folder.update',
+  FolderDelete = 'folder.delete',
+  FolderStatistics = 'folder.statistics',
+  FolderShare = 'folder.share',
+  FolderDownload = 'folder.download',
+
+  FolderAssetCreate = 'folderAsset.create',
+  FolderAssetDelete = 'folderAsset.delete',
+
+  FolderUserCreate = 'folderUser.create',
+  FolderUserUpdate = 'folderUser.update',
+  FolderUserDelete = 'folderUser.delete',
+
   AuthChangePassword = 'auth.changePassword',
 
   AuthDeviceDelete = 'authDevice.delete',
@@ -274,6 +289,7 @@ export enum Permission {
 
 export enum SharedLinkType {
   Album = 'ALBUM',
+  Folder = 'FOLDER',
 
   /**
    * Individual asset
@@ -827,6 +843,7 @@ export enum CronJob {
 export enum ApiTag {
   Activities = 'Activities',
   Albums = 'Albums',
+  Folders = 'Folders',
   ApiKeys = 'API keys',
   Authentication = 'Authentication',
   AuthenticationAdmin = 'Authentication (admin)',

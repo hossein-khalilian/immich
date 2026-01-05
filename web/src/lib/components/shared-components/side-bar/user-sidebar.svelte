@@ -2,9 +2,10 @@
   import { resolve } from '$app/paths';
   import BottomInfo from '$lib/components/shared-components/side-bar/bottom-info.svelte';
   import RecentAlbums from '$lib/components/shared-components/side-bar/recent-albums.svelte';
+  import RecentFolders from '$lib/components/shared-components/side-bar/recent-folders.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
-  import { recentAlbumsDropdown } from '$lib/stores/preferences.store';
+  import { recentAlbumsDropdown, recentFoldersDropdown } from '$lib/stores/preferences.store';
   import { preferences } from '$lib/stores/user.store';
   import {
     mdiAccount,
@@ -110,12 +111,22 @@
     {/snippet}
   </SideBarLink>
 
+  <SideBarLink
+    title={$t('folders')}
+    href={resolve('/(user)/folders')}
+    icon={mdiFolderOutline}
+    flippedLogo
+    bind:dropdownOpen={$recentFoldersDropdown}
+  >
+    {#snippet dropDownContent()}
+      <span in:fly={{ y: -20 }} class="hidden md:block">
+        <RecentFolders />
+      </span>
+    {/snippet}
+  </SideBarLink>
+
   {#if $preferences.tags.enabled && $preferences.tags.sidebarWeb}
     <SideBarLink title={$t('tags')} href={resolve('/(user)/tags')} icon={mdiTagMultipleOutline} flippedLogo />
-  {/if}
-
-  {#if $preferences.folders.enabled && $preferences.folders.sidebarWeb}
-    <SideBarLink title={$t('folders')} href={resolve('/(user)/folders')} icon={mdiFolderOutline} flippedLogo />
   {/if}
 
   <SideBarLink

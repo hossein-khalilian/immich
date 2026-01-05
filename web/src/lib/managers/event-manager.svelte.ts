@@ -1,5 +1,6 @@
 import type { ThemeSetting } from '$lib/managers/theme-manager.svelte';
 import type { ReleaseEvent } from '$lib/types';
+import type { FolderResponseDto } from '$lib/types/folder-sdk';
 import type {
   AlbumResponseDto,
   ApiKeyResponseDto,
@@ -28,6 +29,9 @@ export type Events = {
 
   AlbumUpdate: [AlbumResponseDto];
   AlbumDelete: [AlbumResponseDto];
+
+  FolderUpdate: [FolderResponseDto];
+  FolderDelete: [FolderResponseDto];
 
   QueueUpdate: [QueueResponseDto];
 

@@ -4927,6 +4927,826 @@
         "x-immich-state": "Stable"
       }
     },
+    "/folders": {
+      "get": {
+        "description": "Retrieve a list of folders available to the authenticated user.",
+        "operationId": "getAllFolders",
+        "parameters": [
+          {
+            "name": "assetId",
+            "required": false,
+            "in": "query",
+            "description": "Only returns folders that contain the asset\nIgnores the shared parameter\nundefined: get all folders",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "shared",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FolderResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "List all folders",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.read",
+        "x-immich-state": "Stable"
+      },
+      "post": {
+        "description": "Create a new folder. The folder can also be created with initial users and assets.",
+        "operationId": "createFolder",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Create a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.create",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/assets": {
+      "put": {
+        "description": "Send a list of asset IDs and folder IDs to add each asset to each folder.",
+        "operationId": "addAssetsToFolders",
+        "parameters": [
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoldersAddAssetsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoldersAddAssetsResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Add assets to folders",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderAsset.create",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/statistics": {
+      "get": {
+        "description": "Returns statistics about the folders available to the authenticated user.",
+        "operationId": "getFolderStatistics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderStatisticsResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Retrieve folder statistics",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.statistics",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}": {
+      "delete": {
+        "description": "Delete a specific folder by its ID. Note the folder is initially trashed and then immediately scheduled for deletion, but relies on a background job to complete the process.",
+        "operationId": "deleteFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Delete a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.delete",
+        "x-immich-state": "Stable"
+      },
+      "get": {
+        "description": "Retrieve information about a specific folder by its ID.",
+        "operationId": "getFolderInfo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "withoutAssets",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Retrieve a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.read",
+        "x-immich-state": "Stable"
+      },
+      "patch": {
+        "description": "Update the information of a specific folder by its ID. This endpoint can be used to update the folder name, description, sort order, etc. However, it is not used to add or remove assets or users from the folder.",
+        "operationId": "updateFolderInfo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFolderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Update a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.update",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}/assets": {
+      "delete": {
+        "description": "Remove multiple assets from a specific folder by its ID.",
+        "operationId": "removeAssetFromFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BulkIdResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Remove assets from a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderAsset.delete",
+        "x-immich-state": "Stable"
+      },
+      "put": {
+        "description": "Add multiple assets to a specific folder by its ID.",
+        "operationId": "addAssetsToFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BulkIdResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Add assets to a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderAsset.create",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}/user/{userId}": {
+      "delete": {
+        "description": "Remove a user from a folder. Use an ID of \"me\" to leave a shared folder.",
+        "operationId": "removeUserFromFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Remove user from folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderUser.delete",
+        "x-immich-state": "Stable"
+      },
+      "put": {
+        "description": "Change the role for a specific user in a specific folder.",
+        "operationId": "updateFolderUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFolderUserDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Update user role",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderUser.update",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}/users": {
+      "put": {
+        "description": "Share a folder with multiple users. Each user can be given a specific role in the folder.",
+        "operationId": "addUsersToFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddFolderUsersDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Share folder with users",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folderUser.create",
+        "x-immich-state": "Stable"
+      }
+    },
     "/jobs": {
       "get": {
         "deprecated": true,
@@ -14345,6 +15165,10 @@
       "description": "An album is a collection of assets that can be shared with other users or via shared links."
     },
     {
+      "name": "Folders",
+      "description": "A folder is a collection of assets that can be shared with other users or via shared links."
+    },
+    {
       "name": "API keys",
       "description": "An api key can be used to programmatically access the Immich API."
     },
@@ -14662,6 +15486,21 @@
         "required": [
           "comments",
           "likes"
+        ],
+        "type": "object"
+      },
+      "AddFolderUsersDto": {
+        "properties": {
+          "folderUsers": {
+            "items": {
+              "$ref": "#/components/schemas/FolderUserAddDto"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "folderUsers"
         ],
         "type": "object"
       },
@@ -16214,6 +17053,33 @@
         ],
         "type": "object"
       },
+      "CreateFolderDto": {
+        "properties": {
+          "assetIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "folderName": {
+            "type": "string"
+          },
+          "folderUsers": {
+            "items": {
+              "$ref": "#/components/schemas/FolderUserCreateDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "folderName"
+        ],
+        "type": "object"
+      },
       "CreateLibraryDto": {
         "properties": {
           "exclusionPatterns": {
@@ -16615,6 +17481,222 @@
           "minFaces",
           "minScore",
           "modelName"
+        ],
+        "type": "object"
+      },
+      "FolderResponseDto": {
+        "properties": {
+          "assetCount": {
+            "type": "integer"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/AssetResponseDto"
+            },
+            "type": "array"
+          },
+          "contributorCounts": {
+            "items": {
+              "$ref": "#/components/schemas/ContributorCountResponseDto"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "folderName": {
+            "type": "string"
+          },
+          "folderThumbnailAssetId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "folderUsers": {
+            "items": {
+              "$ref": "#/components/schemas/FolderUserResponseDto"
+            },
+            "type": "array"
+          },
+          "hasSharedLink": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isActivityEnabled": {
+            "type": "boolean"
+          },
+          "lastModifiedAssetTimestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "order": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOrder"
+              }
+            ]
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "shared": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetCount",
+          "assets",
+          "createdAt",
+          "description",
+          "folderName",
+          "folderThumbnailAssetId",
+          "folderUsers",
+          "hasSharedLink",
+          "id",
+          "isActivityEnabled",
+          "owner",
+          "ownerId",
+          "shared",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "FolderStatisticsResponseDto": {
+        "properties": {
+          "notShared": {
+            "type": "integer"
+          },
+          "owned": {
+            "type": "integer"
+          },
+          "shared": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "notShared",
+          "owned",
+          "shared"
+        ],
+        "type": "object"
+      },
+      "FolderUserAddDto": {
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumUserRole"
+              }
+            ],
+            "default": "editor"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "FolderUserCreateDto": {
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumUserRole"
+              }
+            ]
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "FolderUserResponseDto": {
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumUserRole"
+              }
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        },
+        "required": [
+          "role",
+          "user"
+        ],
+        "type": "object"
+      },
+      "FoldersAddAssetsDto": {
+        "properties": {
+          "assetIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "folderIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "assetIds",
+          "folderIds"
+        ],
+        "type": "object"
+      },
+      "FoldersAddAssetsResponseDto": {
+        "properties": {
+          "error": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BulkIdErrorReason"
+              }
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
         ],
         "type": "object"
       },
@@ -17923,6 +19005,18 @@
           "albumUser.create",
           "albumUser.update",
           "albumUser.delete",
+          "folder.create",
+          "folder.read",
+          "folder.update",
+          "folder.delete",
+          "folder.statistics",
+          "folder.share",
+          "folder.download",
+          "folderAsset.create",
+          "folderAsset.delete",
+          "folderUser.create",
+          "folderUser.update",
+          "folderUser.delete",
           "auth.changePassword",
           "authDevice.delete",
           "archive.read",
@@ -19866,6 +20960,7 @@
       "SharedLinkType": {
         "enum": [
           "ALBUM",
+          "FOLDER",
           "INDIVIDUAL"
         ],
         "type": "string"
@@ -22678,6 +23773,46 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "UpdateFolderDto": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "folderName": {
+            "type": "string"
+          },
+          "folderThumbnailAssetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isActivityEnabled": {
+            "type": "boolean"
+          },
+          "order": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOrder"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateFolderUserDto": {
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumUserRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ],
         "type": "object"
       },
       "UpdateLibraryDto": {

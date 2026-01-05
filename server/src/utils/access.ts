@@ -209,6 +209,58 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       return setUnion(isOwner, isShared);
     }
 
+    case Permission.FolderRead: {
+      const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
+      const isShared = await access.folder.checkSharedFolderAccess(
+        auth.user.id,
+        setDifference(ids, isOwner),
+        AlbumUserRole.Viewer,
+      );
+      return setUnion(isOwner, isShared);
+    }
+
+    case Permission.FolderAssetCreate: {
+      const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
+      const isShared = await access.folder.checkSharedFolderAccess(
+        auth.user.id,
+        setDifference(ids, isOwner),
+        AlbumUserRole.Editor,
+      );
+      return setUnion(isOwner, isShared);
+    }
+
+    case Permission.FolderUpdate: {
+      return await access.folder.checkOwnerAccess(auth.user.id, ids);
+    }
+
+    case Permission.FolderDelete: {
+      return await access.folder.checkOwnerAccess(auth.user.id, ids);
+    }
+
+    case Permission.FolderShare: {
+      return await access.folder.checkOwnerAccess(auth.user.id, ids);
+    }
+
+    case Permission.FolderDownload: {
+      const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
+      const isShared = await access.folder.checkSharedFolderAccess(
+        auth.user.id,
+        setDifference(ids, isOwner),
+        AlbumUserRole.Viewer,
+      );
+      return setUnion(isOwner, isShared);
+    }
+
+    case Permission.FolderAssetDelete: {
+      const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
+      const isShared = await access.folder.checkSharedFolderAccess(
+        auth.user.id,
+        setDifference(ids, isOwner),
+        AlbumUserRole.Editor,
+      );
+      return setUnion(isOwner, isShared);
+    }
+
     case Permission.AssetUpload: {
       return ids.has(auth.user.id) ? new Set([auth.user.id]) : new Set<string>();
     }

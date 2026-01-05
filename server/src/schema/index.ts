@@ -8,6 +8,9 @@ import {
   asset_metadata_audit,
   f_concat_ws,
   f_unaccent,
+  folder_delete_audit,
+  folder_user_after_insert,
+  folder_user_delete_audit,
   immich_uuid_v7,
   ll_to_earth_public,
   memory_asset_delete_audit,
@@ -39,6 +42,12 @@ import { AssetOcrTable } from 'src/schema/tables/asset-ocr.table';
 import { AssetTable } from 'src/schema/tables/asset.table';
 import { AuditTable } from 'src/schema/tables/audit.table';
 import { FaceSearchTable } from 'src/schema/tables/face-search.table';
+import { FolderAssetAuditTable } from 'src/schema/tables/folder-asset-audit.table';
+import { FolderAssetTable } from 'src/schema/tables/folder-asset.table';
+import { FolderAuditTable } from 'src/schema/tables/folder-audit.table';
+import { FolderUserAuditTable } from 'src/schema/tables/folder-user-audit.table';
+import { FolderUserTable } from 'src/schema/tables/folder-user.table';
+import { FolderTable } from 'src/schema/tables/folder.table';
 import { GeodataPlacesTable } from 'src/schema/tables/geodata-places.table';
 import { LibraryTable } from 'src/schema/tables/library.table';
 import { MemoryAssetAuditTable } from 'src/schema/tables/memory-asset-audit.table';
@@ -97,6 +106,12 @@ export class ImmichDatabase {
     AuditTable,
     AssetExifTable,
     FaceSearchTable,
+    FolderAssetTable,
+    FolderAssetAuditTable,
+    FolderAuditTable,
+    FolderUserAuditTable,
+    FolderUserTable,
+    FolderTable,
     GeodataPlacesTable,
     LibraryTable,
     MemoryTable,
@@ -147,6 +162,9 @@ export class ImmichDatabase {
     album_delete_audit,
     album_user_after_insert,
     album_user_delete_audit,
+    folder_delete_audit,
+    folder_user_after_insert,
+    folder_user_delete_audit,
     memory_delete_audit,
     memory_asset_delete_audit,
     stack_delete_audit,
@@ -192,6 +210,13 @@ export interface DB {
   audit: AuditTable;
 
   face_search: FaceSearchTable;
+
+  folder: FolderTable;
+  folder_audit: FolderAuditTable;
+  folder_asset: FolderAssetTable;
+  folder_asset_audit: FolderAssetAuditTable;
+  folder_user: FolderUserTable;
+  folder_user_audit: FolderUserAuditTable;
 
   geodata_places: GeodataPlacesTable;
 
