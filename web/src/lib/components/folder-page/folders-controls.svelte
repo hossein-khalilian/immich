@@ -14,7 +14,6 @@
     type FolderGroupOptionMetadata,
     type FolderSortOptionMetadata,
     collapseAllFolderGroups,
-    createFolder,
     expandAllFolderGroups,
     findFilterOption,
     findGroupOptionMetadata,
@@ -24,7 +23,8 @@
     sortOptionsMetadata,
   } from '$lib/utils/folder-utils';
   import { invalidateAll } from '$app/navigation';
-  import { Button, IconButton, Text } from '@immich/ui';
+  import { Button, IconButton, Text, modalManager } from '@immich/ui';
+  import FolderCreateModal from '$lib/modals/FolderCreateModal.svelte';
   import {
     mdiArrowDownThin,
     mdiArrowUpThin,
@@ -131,8 +131,10 @@
 <Button
   leadingIcon={mdiPlusBoxOutline}
   onclick={async () => {
-    await createFolder();
-    await invalidateAll();
+    const result = await modalManager.show(FolderCreateModal, {});
+    if (result) {
+      await invalidateAll();
+    }
   }}
   size="small"
   variant="ghost"

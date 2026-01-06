@@ -8,9 +8,10 @@
   import GroupTab from '$lib/elements/GroupTab.svelte';
   import SearchBar from '$lib/elements/SearchBar.svelte';
   import { FolderFilter, folderViewSettings } from '$lib/stores/preferences.store';
-  import { createFolder } from '$lib/utils/folder-utils';
   import { invalidateAll } from '$app/navigation';
   import { t } from 'svelte-i18n';
+  import { modalManager } from '@immich/ui';
+  import FolderCreateModal from '$lib/modals/FolderCreateModal.svelte';
   import type { PageData } from './$types';
 
   interface Props {
@@ -57,8 +58,10 @@
       <EmptyPlaceholder
         text={$t('no_folders_message')}
         onClick={async () => {
-          await createFolder();
-          await invalidateAll();
+          const result = await modalManager.show(FolderCreateModal, {});
+          if (result) {
+            await invalidateAll();
+          }
         }}
         class="mt-10 mx-auto"
       />
