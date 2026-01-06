@@ -15,7 +15,7 @@ const buildQueryString = (params: Record<string, string | boolean | undefined>) 
   return searchParams.toString();
 };
 
-export const getAllFolders = async (params?: { shared?: boolean; assetId?: string }, fetchFn: typeof fetch = fetch): Promise<FolderResponseDto[]> => {
+export const getAllFolders = async (params?: { shared?: boolean; assetId?: string; parentId?: string | null }, fetchFn: typeof fetch = fetch): Promise<FolderResponseDto[]> => {
   const allParams = { ...authManager.params, ...(params || {}) };
   const queryString = buildQueryString(allParams);
   const url = `${getBaseUrl()}/folders${queryString ? `?${queryString}` : ''}`;
@@ -141,6 +141,32 @@ export const removeAssetFromFolder = async (id: string, assetIds: string[]): Pro
   });
   if (!response.ok) {
     throw new Error(`Failed to remove assets from folder: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+export const getSubfolders = async (id: string): Promise<FolderResponseDto[]> => {
+  const queryString = buildQueryString(authManager.params);
+  const url = `${getBaseUrl()}/folders/${id}/subfolders${queryString ? `?${queryString}` : ''}`;
+  const response = await fetch(url, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch subfolders: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+export const getFolderAncestors = async (id: string): Promise<FolderResponseDto[]> => {
+  const queryString = buildQueryString(authManager.params);
+  const url = `${getBaseUrl()}/folders/${id}/ancestors${queryString ? `?${queryString}` : ''}`;
+  const response = await fetch(url, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch folder ancestors: ${response.statusText}`);
   }
   const data = await response.json();
   return data;

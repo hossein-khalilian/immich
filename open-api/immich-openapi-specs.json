@@ -4943,6 +4943,17 @@
             }
           },
           {
+            "name": "parentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by parent folder ID\nnull: only root folders (no parent)\nundefined: all folders regardless of parent\nuuid: only direct children of the specified folder",
+            "schema": {
+              "format": "uuid",
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
             "name": "shared",
             "required": false,
             "in": "query",
@@ -5387,6 +5398,69 @@
         "x-immich-state": "Stable"
       }
     },
+    "/folders/{id}/ancestors": {
+      "get": {
+        "description": "Retrieve the ancestor folders (path from root to folder) for breadcrumb navigation.",
+        "operationId": "getAncestors",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FolderResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get folder ancestors",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.read",
+        "x-immich-state": "Stable"
+      }
+    },
     "/folders/{id}/assets": {
       "delete": {
         "description": "Remove multiple assets from a specific folder by its ID.",
@@ -5544,6 +5618,69 @@
           }
         ],
         "x-immich-permission": "folderAsset.create",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}/subfolders": {
+      "get": {
+        "description": "Retrieve direct subfolders of a specific folder by its ID.",
+        "operationId": "getSubfolders",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FolderResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get subfolders",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.read",
         "x-immich-state": "Stable"
       }
     },
@@ -17073,6 +17210,10 @@
               "$ref": "#/components/schemas/FolderUserCreateDto"
             },
             "type": "array"
+          },
+          "parentId": {
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
@@ -17551,12 +17692,19 @@
           "ownerId": {
             "type": "string"
           },
+          "parentId": {
+            "nullable": true,
+            "type": "string"
+          },
           "shared": {
             "type": "boolean"
           },
           "startDate": {
             "format": "date-time",
             "type": "string"
+          },
+          "subfolderCount": {
+            "type": "integer"
           },
           "updatedAt": {
             "format": "date-time",
@@ -23796,6 +23944,11 @@
                 "$ref": "#/components/schemas/AssetOrder"
               }
             ]
+          },
+          "parentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"

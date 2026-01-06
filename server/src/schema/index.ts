@@ -45,6 +45,7 @@ import { FaceSearchTable } from 'src/schema/tables/face-search.table';
 import { FolderAssetAuditTable } from 'src/schema/tables/folder-asset-audit.table';
 import { FolderAssetTable } from 'src/schema/tables/folder-asset.table';
 import { FolderAuditTable } from 'src/schema/tables/folder-audit.table';
+import { FolderClosureTable } from 'src/schema/tables/folder-closure.table';
 import { FolderUserAuditTable } from 'src/schema/tables/folder-user-audit.table';
 import { FolderUserTable } from 'src/schema/tables/folder-user.table';
 import { FolderTable } from 'src/schema/tables/folder.table';
@@ -109,6 +110,7 @@ export class ImmichDatabase {
     FolderAssetTable,
     FolderAssetAuditTable,
     FolderAuditTable,
+    FolderClosureTable,
     FolderUserAuditTable,
     FolderUserTable,
     FolderTable,
@@ -215,6 +217,7 @@ export interface DB {
   folder_audit: FolderAuditTable;
   folder_asset: FolderAssetTable;
   folder_asset_audit: FolderAssetAuditTable;
+  folder_closure: FolderClosureTable;
   folder_user: FolderUserTable;
   folder_user_audit: FolderUserAuditTable;
 

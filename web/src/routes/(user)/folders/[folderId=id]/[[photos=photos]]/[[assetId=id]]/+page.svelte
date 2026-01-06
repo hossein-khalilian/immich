@@ -51,7 +51,8 @@
     navigate,
     type AssetGridRouteSearchParams,
   } from '$lib/utils/navigation';
-  import { addAssetsToFolder, addUsersToFolder, getFolderInfo, updateFolderInfo } from '$lib/utils/folder-api';
+  import { addAssetsToFolder, addUsersToFolder, getFolderInfo, updateFolderInfo, getSubfolders, getFolderAncestors } from '$lib/utils/folder-api';
+  import { createSubfolderAndRedirect } from '$lib/utils/folder-utils';
   import type { FolderResponseDto, FolderUserAddDto } from '$lib/types/folder-sdk';
   import { AlbumUserRole, AssetOrder, AssetVisibility } from '@immich/sdk';
   import { Button, Icon, IconButton, modalManager, toastManager } from '@immich/ui';
@@ -63,6 +64,7 @@
     mdiDeleteOutline,
     mdiDotsVertical,
     mdiDownload,
+    mdiFolderPlusOutline,
     mdiImageOutline,
     mdiImagePlusOutline,
     mdiLink,
@@ -645,6 +647,11 @@
                     onClick={() => timelineManager.toggleShowAssetOwners()}
                   />
                 {/if}
+                <MenuOption
+                  icon={mdiFolderPlusOutline}
+                  text={$t('create_subfolder')}
+                  onClick={() => createSubfolderAndRedirect(folder.id)}
+                />
                 {#if folder.assetCount > 0}
                   <MenuOption
                     icon={mdiImageOutline}

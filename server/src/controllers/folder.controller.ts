@@ -73,6 +73,28 @@ export class FolderController {
     return this.service.get(auth, id, dto);
   }
 
+  @Authenticated({ permission: Permission.FolderRead })
+  @Get(':id/subfolders')
+  @Endpoint({
+    summary: 'Get subfolders',
+    description: 'Retrieve direct subfolders of a specific folder by its ID.',
+    history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
+  })
+  getSubfolders(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<FolderResponseDto[]> {
+    return this.service.getSubfolders(auth, id);
+  }
+
+  @Authenticated({ permission: Permission.FolderRead })
+  @Get(':id/ancestors')
+  @Endpoint({
+    summary: 'Get folder ancestors',
+    description: 'Retrieve the ancestor folders (path from root to folder) for breadcrumb navigation.',
+    history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
+  })
+  getAncestors(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<FolderResponseDto[]> {
+    return this.service.getAncestors(auth, id);
+  }
+
   @Patch(':id')
   @Authenticated({ permission: Permission.FolderUpdate })
   @Endpoint({

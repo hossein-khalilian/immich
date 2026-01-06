@@ -81,7 +81,16 @@
         </p>
       {/if}
 
-      {#if (showOwner || folder.shared) && showItemCount}
+      {#if folder.subfolderCount && folder.subfolderCount > 0}
+        {#if showItemCount}
+          <p>•</p>
+        {/if}
+        <p>
+          {$t('subfolders_count', { values: { count: folder.subfolderCount } })}
+        </p>
+      {/if}
+
+      {#if (showOwner || folder.shared) && (showItemCount || (folder.subfolderCount && folder.subfolderCount > 0))}
         <p>•</p>
       {/if}
 

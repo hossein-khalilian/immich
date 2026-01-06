@@ -33,6 +33,8 @@ export interface FolderResponseDto {
   }>;
   startDate?: string;
   endDate?: string;
+  parentId?: string | null;
+  subfolderCount?: number;
 }
 
 export interface CreateFolderDto {
@@ -43,6 +45,7 @@ export interface CreateFolderDto {
     role: AlbumUserRole;
   }>;
   assetIds?: string[];
+  parentId?: string;
 }
 
 export interface UpdateFolderDto {
@@ -51,6 +54,7 @@ export interface UpdateFolderDto {
   folderThumbnailAssetId?: string;
   isActivityEnabled?: boolean;
   order?: string;
+  parentId?: string | null;
 }
 
 export interface FolderUserAddDto {
@@ -65,6 +69,7 @@ export interface AddFolderUsersDto {
 export interface GetFoldersDto {
   shared?: boolean;
   assetId?: string;
+  parentId?: string | null;
 }
 
 export interface BulkIdResponseDto {
@@ -87,6 +92,8 @@ declare module '@immich/sdk' {
   export function addAssetsToFolder(params: { id: string; assetIds: string[] }): Promise<BulkIdResponseDto[]>;
   export function removeAssetsFromFolder(params: { id: string; assetIds: string[] }): Promise<BulkIdResponseDto[]>;
   export function downloadFolderArchive(params: { id: string }): Promise<Blob>;
+  export function getSubfolders(params: { id: string }): Promise<FolderResponseDto[]>;
+  export function getFolderAncestors(params: { id: string }): Promise<FolderResponseDto[]>;
   
   // Extend getAllSharedLinks to support folderId (will be added when SDK is regenerated)
   // For now, using @ts-expect-error in FolderShareModal

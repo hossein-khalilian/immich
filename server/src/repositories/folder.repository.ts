@@ -21,6 +21,11 @@ export interface FolderInfoOptions {
   withAssets: boolean;
 }
 
+export interface FolderSubfolderCount {
+  folderId: string;
+  subfolderCount: number;
+}
+
 const withOwner = (eb: ExpressionBuilder<DB, 'folder'>) => {
   return jsonObjectFrom(eb.selectFrom('user').select(columns.user).whereRef('user.id', '=', 'folder.ownerId'))
     .$notNull()
@@ -143,7 +148,7 @@ export class FolderRepository {
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })
-  async getOwned(ownerId: string) {
+  async getOwned(ownerId: string, parentId?: string | null) {
     return this.db
       .selectFrom('folder')
       .selectAll('folder')
@@ -152,8 +157,110 @@ export class FolderRepository {
       .select(withSharedLink)
       .where('folder.ownerId', '=', ownerId)
       .where('folder.deletedAt', 'is', null)
+      .$if(parentId === null, (qb) => qb.where('folder.parentId', 'is', null))
+      .$if(parentId !== undefined && parentId !== null, (qb) => qb.where('folder.parentId', '=', parentId!))
       .orderBy('folder.createdAt', 'desc')
       .execute();
+  }
+
+  /**
+   * Get direct subfolders of a folder
+   */
+  @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID] })
+  async getSubfolders(ownerId: string, parentId: string) {
+    return this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .select(withOwner)
+      .select(withFolderUsers)
+      .select(withSharedLink)
+      .where('folder.parentId', '=', parentId)
+      .where('folder.deletedAt', 'is', null)
+      .where((eb) =>
+        eb.or([
+          eb('folder.ownerId', '=', ownerId),
+          eb.exists(
+            eb
+              .selectFrom('folder_user')
+              .whereRef('folder_user.folderId', '=', 'folder.id')
+              .where('folder_user.userId', '=', ownerId),
+          ),
+        ]),
+      )
+      .orderBy('folder.folderName', 'asc')
+      .execute();
+  }
+
+  /**
+   * Get root folders (folders without a parent)
+   */
+  @GenerateSql({ params: [DummyValue.UUID] })
+  async getRootFolders(ownerId: string) {
+    return this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .select(withOwner)
+      .select(withFolderUsers)
+      .select(withSharedLink)
+      .where('folder.ownerId', '=', ownerId)
+      .where('folder.deletedAt', 'is', null)
+      .where('folder.parentId', 'is', null)
+      .orderBy('folder.createdAt', 'desc')
+      .execute();
+  }
+
+  /**
+   * Get ancestor folders (path from root to folder)
+   */
+  @GenerateSql({ params: [DummyValue.UUID] })
+  async getAncestors(folderId: string) {
+    return this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .select(withOwner)
+      .innerJoin('folder_closure', 'folder_closure.id_ancestor', 'folder.id')
+      .where('folder_closure.id_descendant', '=', folderId)
+      .where('folder.deletedAt', 'is', null)
+      .where('folder.id', '!=', folderId) // exclude self
+      .orderBy('folder.createdAt', 'asc')
+      .execute();
+  }
+
+  /**
+   * Get all descendant folders (all nested subfolders)
+   */
+  @GenerateSql({ params: [DummyValue.UUID] })
+  async getDescendants(folderId: string) {
+    return this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .select(withOwner)
+      .innerJoin('folder_closure', 'folder_closure.id_descendant', 'folder.id')
+      .where('folder_closure.id_ancestor', '=', folderId)
+      .where('folder.deletedAt', 'is', null)
+      .where('folder.id', '!=', folderId) // exclude self
+      .orderBy('folder.folderName', 'asc')
+      .execute();
+  }
+
+  /**
+   * Get subfolder counts for given folder IDs
+   */
+  @GenerateSql({ params: [[DummyValue.UUID]] })
+  @ChunkedArray()
+  async getSubfolderCounts(folderIds: string[]): Promise<FolderSubfolderCount[]> {
+    if (folderIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom('folder')
+      .select('folder.parentId as folderId')
+      .select((eb) => sql<number>`${eb.fn.count('folder.id')}::int`.as('subfolderCount'))
+      .where('folder.parentId', 'in', folderIds)
+      .where('folder.deletedAt', 'is', null)
+      .groupBy('folder.parentId')
+      .execute() as Promise<FolderSubfolderCount[]>;
   }
 
   /**
@@ -260,10 +367,32 @@ export class FolderRepository {
 
   create(folder: Insertable<FolderTable>, assetIds: string[], folderUsers: FolderUserCreateDto[]) {
     return this.db.transaction().execute(async (tx) => {
-      const newFolder = await tx.insertInto('folder').values(folder).returning('folder.id').executeTakeFirst();
+      const newFolder = await tx.insertInto('folder').values(folder).returning(['folder.id', 'folder.parentId']).executeTakeFirst();
 
       if (!newFolder) {
         throw new Error('Failed to create folder');
+      }
+
+      // Update closure table - add self reference
+      await tx
+        .insertInto('folder_closure')
+        .values({ id_ancestor: newFolder.id, id_descendant: newFolder.id })
+        .onConflict((oc) => oc.doNothing())
+        .execute();
+
+      // If has parent, add all ancestors from parent
+      if (newFolder.parentId) {
+        await tx
+          .insertInto('folder_closure')
+          .columns(['id_ancestor', 'id_descendant'])
+          .expression(
+            tx
+              .selectFrom('folder_closure')
+              .select(['id_ancestor', sql.raw<string>(`'${newFolder.id}'`).as('id_descendant')])
+              .where('id_descendant', '=', newFolder.parentId),
+          )
+          .onConflict((oc) => oc.doNothing())
+          .execute();
       }
 
       if (assetIds.length > 0) {
@@ -301,6 +430,59 @@ export class FolderRepository {
       .returning(withSharedLink)
       .returning(withFolderUsers)
       .executeTakeFirstOrThrow();
+  }
+
+  /**
+   * Update folder parent and rebuild closure table
+   */
+  async updateParent(id: string, newParentId: string | null) {
+    return this.db.transaction().execute(async (tx) => {
+      // Get all descendants (including self)
+      const descendants = await tx
+        .selectFrom('folder_closure')
+        .select('id_descendant')
+        .where('id_ancestor', '=', id)
+        .execute();
+
+      const descendantIds = descendants.map((d) => d.id_descendant);
+
+      // Remove all ancestor relationships for this subtree (except self-references within subtree)
+      await tx
+        .deleteFrom('folder_closure')
+        .where('id_descendant', 'in', descendantIds)
+        .where('id_ancestor', 'not in', descendantIds)
+        .execute();
+
+      // Update the folder's parent
+      await tx.updateTable('folder').set({ parentId: newParentId }).where('id', '=', id).execute();
+
+      // Add new ancestor relationships if there's a new parent
+      if (newParentId) {
+        // For each descendant, add relationships to all new ancestors
+        for (const descendantId of descendantIds) {
+          await tx
+            .insertInto('folder_closure')
+            .columns(['id_ancestor', 'id_descendant'])
+            .expression(
+              tx
+                .selectFrom('folder_closure')
+                .select(['id_ancestor', sql.raw<string>(`'${descendantId}'`).as('id_descendant')])
+                .where('id_descendant', '=', newParentId),
+            )
+            .onConflict((oc) => oc.doNothing())
+            .execute();
+        }
+      }
+
+      return tx
+        .selectFrom('folder')
+        .selectAll()
+        .where('id', '=', id)
+        .select(withOwner)
+        .select(withSharedLink)
+        .select(withFolderUsers)
+        .executeTakeFirstOrThrow();
+    });
   }
 
   async delete(id: string): Promise<void> {

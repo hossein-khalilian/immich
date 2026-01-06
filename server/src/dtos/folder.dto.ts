@@ -55,6 +55,9 @@ export class CreateFolderDto {
 
   @ValidateUUID({ optional: true, each: true })
   assetIds?: string[];
+
+  @ValidateUUID({ optional: true })
+  parentId?: string;
 }
 
 export class FoldersAddAssetsDto {
@@ -88,6 +91,9 @@ export class UpdateFolderDto {
 
   @ValidateEnum({ enum: AssetOrder, name: 'AssetOrder', optional: true })
   order?: AssetOrder;
+
+  @ValidateUUID({ optional: true })
+  parentId?: string | null;
 }
 
 export class GetFoldersDto {
@@ -106,6 +112,15 @@ export class GetFoldersDto {
    */
   @ValidateUUID({ optional: true })
   assetId?: string;
+
+  /**
+   * Filter by parent folder ID
+   * null: only root folders (no parent)
+   * undefined: all folders regardless of parent
+   * uuid: only direct children of the specified folder
+   */
+  @ValidateUUID({ optional: true })
+  parentId?: string | null;
 }
 
 export class FolderStatisticsResponseDto {
@@ -159,6 +174,9 @@ export class FolderResponseDto {
   isActivityEnabled!: boolean;
   @ValidateEnum({ enum: AssetOrder, name: 'AssetOrder', optional: true })
   order?: AssetOrder;
+  parentId?: string | null;
+  @ApiProperty({ type: 'integer' })
+  subfolderCount?: number;
 
   // Optional per-user contribution counts for shared folders
   @Type(() => ContributorCountResponseDto)
@@ -180,6 +198,8 @@ export type MapFolderDto = {
   owner: User;
   isActivityEnabled: boolean;
   order: AssetOrder;
+  parentId?: string | null;
+  subfolderCount?: number;
 };
 
 export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: AuthDto): FolderResponseDto => {
@@ -227,6 +247,8 @@ export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: Auth
     assetCount: entity.assets?.length || 0,
     isActivityEnabled: entity.isActivityEnabled,
     order: entity.order,
+    parentId: entity.parentId ?? null,
+    subfolderCount: entity.subfolderCount ?? 0,
   };
 };
 

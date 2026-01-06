@@ -21,11 +21,12 @@ import { get } from 'svelte/store';
  * Folders General Management
  * -------------------------
  */
-export const createFolder = async (name?: string, assetIds?: string[]) => {
+export const createFolder = async (name?: string, assetIds?: string[], parentId?: string) => {
   try {
     const newFolder: FolderResponseDto = await createFolderApi({
       folderName: name ?? '',
       assetIds,
+      parentId,
     });
     return newFolder;
   } catch (error) {
@@ -34,8 +35,19 @@ export const createFolder = async (name?: string, assetIds?: string[]) => {
   }
 };
 
-export const createFolderAndRedirect = async (name?: string, assetIds?: string[]) => {
-  const newFolder = await createFolder(name, assetIds);
+export const createFolderAndRedirect = async (name?: string, assetIds?: string[], parentId?: string) => {
+  const newFolder = await createFolder(name, assetIds, parentId);
+  if (newFolder) {
+    await goto(`${AppRoute.FOLDERS}/${newFolder.id}`);
+  }
+};
+
+export const createSubfolder = async (parentId: string, name?: string) => {
+  return createFolder(name, [], parentId);
+};
+
+export const createSubfolderAndRedirect = async (parentId: string, name?: string) => {
+  const newFolder = await createSubfolder(parentId, name);
   if (newFolder) {
     await goto(`${AppRoute.FOLDERS}/${newFolder.id}`);
   }

@@ -63,6 +63,9 @@ export class FolderTable {
   @Column({ default: AssetOrder.Desc })
   order!: Generated<AssetOrder>;
 
+  @ForeignKeyColumn(() => FolderTable, { nullable: true, onDelete: 'CASCADE' })
+  parentId!: string | null;
+
   @UpdateIdColumn({ index: true })
   updateId!: Generated<string>;
 }
