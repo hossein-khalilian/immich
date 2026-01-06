@@ -75,22 +75,22 @@
     {/if}
 
     <span class="flex gap-2 text-sm dark:text-immich-dark-fg" data-testid="folder-details">
-      {#if showItemCount}
-        <p>
-          {$t('items_count', { values: { count: folder.assetCount } })}
-        </p>
-      {/if}
-
       {#if folder.subfolderCount && folder.subfolderCount > 0}
-        {#if showItemCount}
-          <p>•</p>
-        {/if}
         <p>
           {$t('subfolders_count', { values: { count: folder.subfolderCount } })}
         </p>
       {/if}
 
-      {#if (showOwner || folder.shared) && (showItemCount || (folder.subfolderCount && folder.subfolderCount > 0))}
+      {#if showItemCount && folder.assetCount > 0}
+        {#if folder.subfolderCount && folder.subfolderCount > 0}
+          <p>•</p>
+        {/if}
+        <p>
+          {$t('items_count', { values: { count: folder.assetCount } })}
+        </p>
+      {/if}
+
+      {#if (showOwner || folder.shared) && ((folder.subfolderCount && folder.subfolderCount > 0) || (showItemCount && folder.assetCount > 0))}
         <p>•</p>
       {/if}
 

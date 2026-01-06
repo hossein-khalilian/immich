@@ -14,7 +14,7 @@
     type FolderGroupOptionMetadata,
     type FolderSortOptionMetadata,
     collapseAllFolderGroups,
-    createFolderAndRedirect,
+    createFolder,
     expandAllFolderGroups,
     findFilterOption,
     findGroupOptionMetadata,
@@ -23,6 +23,7 @@
     groupOptionsMetadata,
     sortOptionsMetadata,
   } from '$lib/utils/folder-utils';
+  import { invalidateAll } from '$app/navigation';
   import { Button, IconButton, Text } from '@immich/ui';
   import {
     mdiArrowDownThin,
@@ -129,7 +130,10 @@
 <!-- Create Folder -->
 <Button
   leadingIcon={mdiPlusBoxOutline}
-  onclick={() => createFolderAndRedirect()}
+  onclick={async () => {
+    await createFolder();
+    await invalidateAll();
+  }}
   size="small"
   variant="ghost"
   color="secondary"

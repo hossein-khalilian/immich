@@ -97,7 +97,14 @@
   <Breadcrumbs node={data.tree} icon={mdiFolderHome} title={$t('folders')} getLink={getLinkForPath} />
 
   <section class="mt-2 h-[calc(100%-(--spacing(25)))] overflow-auto immich-scrollbar">
-    <TreeItemThumbnails items={data.tree.children} icon={mdiFolder} onClick={handleNavigateToFolder} />
+    {#if data.tree.children && data.tree.children.length > 0}
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase">
+          {$t('subfolders')}
+        </h2>
+        <TreeItemThumbnails items={data.tree.children} icon={mdiFolder} onClick={handleNavigateToFolder} />
+      </div>
+    {/if}
 
     <!-- Assets -->
     {#if data.pathAssets && data.pathAssets.length > 0}

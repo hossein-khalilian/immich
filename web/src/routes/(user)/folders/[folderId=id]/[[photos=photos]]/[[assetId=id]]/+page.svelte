@@ -2,11 +2,11 @@
   import { afterNavigate, goto, onNavigate } from '$app/navigation';
   import { scrollMemoryClearer } from '$lib/actions/scroll-memory';
   import CastButton from '$lib/cast/cast-button.svelte';
+  import ActivityStatus from '$lib/components/asset-viewer/activity-status.svelte';
+  import ActivityViewer from '$lib/components/asset-viewer/activity-viewer.svelte';
   import FolderDescription from '$lib/components/folder-page/folder-description.svelte';
   import FolderSummary from '$lib/components/folder-page/folder-summary.svelte';
   import FolderTitle from '$lib/components/folder-page/folder-title.svelte';
-  import ActivityStatus from '$lib/components/asset-viewer/activity-status.svelte';
-  import ActivityViewer from '$lib/components/asset-viewer/activity-viewer.svelte';
   import OnEvents from '$lib/components/OnEvents.svelte';
   import ButtonContextMenu from '$lib/components/shared-components/context-menu/button-context-menu.svelte';
   import MenuOption from '$lib/components/shared-components/context-menu/menu-option.svelte';
@@ -28,7 +28,6 @@
   import Timeline from '$lib/components/timeline/Timeline.svelte';
   import { AlbumPageViewMode, AppRoute } from '$lib/constants';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
-  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import FolderOptionsModal from '$lib/modals/FolderOptionsModal.svelte';
@@ -40,9 +39,20 @@
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import { SlideshowNavigation, SlideshowState, slideshowStore } from '$lib/stores/slideshow.store';
   import { preferences, user } from '$lib/stores/user.store';
+  import type { FolderResponseDto, FolderUserAddDto } from '$lib/types/folder-sdk';
   import { handlePromiseError } from '$lib/utils';
   import { cancelMultiselect } from '$lib/utils/asset-utils';
   import { openFileUploadDialog } from '$lib/utils/file-uploader';
+  import { addAssetsToFolder, addUsersToFolder, getFolderInfo, updateFolderInfo } from '$lib/utils/folder-api';
+  import { createSubfolder } from '$lib/utils/folder-utils';
+  import { createAlbum } from '$lib/utils/album-utils';
+  import { invalidateAll } from '$app/navigation';
+  import Folders from '$lib/components/folder-page/folders-list.svelte';
+  import AlbumCardGroup from '$lib/components/album-page/album-card-group.svelte';
+  import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
+  import EmptyPlaceholder from '$lib/components/shared-components/empty-placeholder.svelte';
+  import { scrollMemory } from '$lib/actions/scroll-memory';
+  import { folderViewSettings } from '$lib/stores/preferences.store';
   import { handleError } from '$lib/utils/handle-error';
   import {
     isFoldersRoute,
@@ -51,9 +61,6 @@
     navigate,
     type AssetGridRouteSearchParams,
   } from '$lib/utils/navigation';
-  import { addAssetsToFolder, addUsersToFolder, getFolderInfo, updateFolderInfo, getSubfolders, getFolderAncestors } from '$lib/utils/folder-api';
-  import { createSubfolderAndRedirect } from '$lib/utils/folder-utils';
-  import type { FolderResponseDto, FolderUserAddDto } from '$lib/types/folder-sdk';
   import { AlbumUserRole, AssetOrder, AssetVisibility } from '@immich/sdk';
   import { Button, Icon, IconButton, modalManager, toastManager } from '@immich/ui';
   import {
@@ -69,6 +76,7 @@
     mdiImagePlusOutline,
     mdiLink,
     mdiPlus,
+    mdiPlusBoxOutline,
     mdiPresentationPlay,
     mdiShareVariantOutline,
     mdiUpload,
@@ -115,7 +123,12 @@
 
     backUrl = url || AppRoute.FOLDERS;
 
-    if (backUrl === AppRoute.SHARING && folder.folderUsers && folder.folderUsers.length === 0 && !folder.hasSharedLink) {
+    if (
+      backUrl === AppRoute.SHARING &&
+      folder.folderUsers &&
+      folder.folderUsers.length === 0 &&
+      !folder.hasSharedLink
+    ) {
       isCreatingSharedFolder = true;
     } else if (backUrl === AppRoute.SHARED_LINKS) {
       backUrl = history.state?.backUrl || AppRoute.FOLDERS;
@@ -277,6 +290,8 @@
   let folder = $derived(data.folder);
   let folderId = $derived(folder.id);
   let folderUsers = $derived(folder.folderUsers || []);
+  let subfolders = $derived(data.subfolders || []);
+  let albums = $derived(data.albums || []);
 
   const containsEditors = $derived(folder?.shared && folderUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const folderUsersList = $derived(
@@ -404,338 +419,69 @@
 
 <OnEvents {onSharedLinkCreate} {onFolderDelete} />
 
-<div class="flex overflow-hidden" use:scrollMemoryClearer={{ routeStartsWith: AppRoute.FOLDERS }}>
-  <div class="relative w-full shrink">
-    <main class="relative h-dvh overflow-hidden px-2 md:px-6 max-md:pt-(--navbar-height-md) pt-(--navbar-height)">
-      <Timeline
-        enableRouting={viewMode === AlbumPageViewMode.SELECT_ASSETS ? false : true}
-        folder={folder}
-        folderUsers={folderUsersList}
-        bind:timelineManager
-        {options}
-        assetInteraction={currentAssetIntersection}
-        {isShared}
-        {isSelectionMode}
-        {singleSelect}
-        {showArchiveIcon}
-        {onSelect}
-        onEscape={handleEscape}
-      >
-        {#if viewMode !== AlbumPageViewMode.SELECT_ASSETS}
-          {#if viewMode !== AlbumPageViewMode.SELECT_THUMBNAIL}
-            <!-- FOLDER TITLE -->
-            <section class="pt-8 md:pt-24">
-              <FolderTitle
-                id={folder.id}
-                folderName={folder.folderName}
-                {isOwned}
-                onUpdate={(folderName) => (folder.folderName = folderName)}
-              />
-
-              {#if folder.assetCount > 0}
-                <FolderSummary {folder} />
-              {/if}
-
-              <!-- FOLDER SHARING -->
-              {#if folderUsers.length > 0 || (folder.hasSharedLink && isOwned)}
-                <div class="my-3 flex gap-x-1">
-                  <!-- link -->
-                  {#if folder.hasSharedLink && isOwned}
-                    <IconButton
-                      aria-label={$t('create_link_to_share')}
-                      color="secondary"
-                      size="medium"
-                      shape="round"
-                      icon={mdiLink}
-                      onclick={handleShareLink}
-                    />
-                  {/if}
-
-                  <!-- owner -->
-                  {#if folder.owner}
-                    <button type="button" onclick={handleEditUsers}>
-                      <UserAvatar user={folder.owner} size="md" />
-                    </button>
-                  {/if}
-
-                  <!-- users with write access (collaborators) -->
-                  {#each folderUsers.filter(({ role }) => role === AlbumUserRole.Editor) as { user } (user.id)}
-                    <button type="button" onclick={handleEditUsers}>
-                      <UserAvatar {user} size="md" />
-                    </button>
-                  {/each}
-
-                  <!-- display ellipsis if there are readonly users too -->
-                  {#if folderHasViewers}
-                    <IconButton
-                      shape="round"
-                      aria-label={$t('view_all_users')}
-                      color="secondary"
-                      size="medium"
-                      icon={mdiDotsVertical}
-                      onclick={handleEditUsers}
-                    />
-                  {/if}
-
-                  {#if isOwned}
-                    <IconButton
-                      shape="round"
-                      color="secondary"
-                      size="medium"
-                      icon={mdiPlus}
-                      onclick={handleShare}
-                      aria-label={$t('add_more_users')}
-                    />
-                  {/if}
-                </div>
-              {/if}
-              <!-- FOLDER DESCRIPTION -->
-              <FolderDescription id={folder.id} bind:description={folder.description} {isOwned} />
-            </section>
-          {/if}
-
-          {#if folder.assetCount === 0}
-            <section id="empty-folder" class=" mt-50 flex place-content-center place-items-center">
-              <div class="w-75">
-                <p class="uppercase text-xs dark:text-immich-dark-fg">{$t('add_photos')}</p>
-                <button
-                  type="button"
-                  onclick={() => (viewMode = AlbumPageViewMode.SELECT_ASSETS)}
-                  class="mt-5 bg-subtle flex w-full place-items-center gap-6 rounded-2xl border px-8 py-8 text-immich-fg transition-all hover:bg-gray-100 dark:hover:bg-gray-500/20 hover:text-immich-primary dark:border-none dark:text-immich-dark-fg dark:hover:text-immich-dark-primary"
-                >
-                  <span class="text-primary">
-                    <Icon icon={mdiPlus} size="24" />
-                  </span>
-                  <span class="text-lg">{$t('select_photos')}</span>
-                </button>
-              </div>
-            </section>
-          {/if}
-        {/if}
-      </Timeline>
-
-      {#if showActivityStatus && !activityManager.isLoading}
-        <div class="absolute z-2 bottom-0 end-0 mb-6 me-6 justify-self-end">
-          <ActivityStatus
-            disabled={!folder.isActivityEnabled}
-            isLiked={activityManager.isLiked}
-            numberOfComments={activityManager.commentCount}
-            numberOfLikes={undefined}
-            onFavorite={handleFavorite}
-            onOpenActivityTab={handleOpenAndCloseActivityTab}
-          />
-        </div>
-      {/if}
-    </main>
-
-    {#if assetInteraction.selectionActive}
-      <AssetSelectControlBar
-        assets={assetInteraction.selectedAssets}
-        clearSelect={() => assetInteraction.clearMultiselect()}
-      >
-        <CreateSharedLink />
-        <SelectAllAssets {timelineManager} {assetInteraction} />
-        <ButtonContextMenu icon={mdiPlus} title={$t('add_to')}>
-          <AddToAlbum />
-          <AddToAlbum shared />
-        </ButtonContextMenu>
-        {#if assetInteraction.isAllUserOwned}
-          <FavoriteAction
-            removeFavorite={assetInteraction.isAllFavorite}
-            onFavorite={(ids, isFavorite) => timelineManager.update(ids, (asset) => (asset.isFavorite = isFavorite))}
-          ></FavoriteAction>
-        {/if}
-        <ButtonContextMenu icon={mdiDotsVertical} title={$t('menu')} offset={{ x: 175, y: 25 }}>
-          <DownloadAction menuItem filename="{folder.folderName}.zip" />
-          {#if assetInteraction.isAllUserOwned}
-            <ChangeDate menuItem />
-            <ChangeDescription menuItem />
-            <ChangeLocation menuItem />
-            {#if assetInteraction.selectedAssets.length === 1}
-              <MenuOption
-                text={$t('set_as_folder_cover')}
-                icon={mdiImageOutline}
-                onClick={() => updateThumbnailUsingCurrentSelection()}
-              />
-            {/if}
-            <ArchiveAction
-              menuItem
-              unarchive={assetInteraction.isAllArchived}
-              onArchive={(ids, visibility) => timelineManager.update(ids, (asset) => (asset.visibility = visibility))}
-            />
-            <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
-          {/if}
-
-          {#if $preferences.tags.enabled && assetInteraction.isAllUserOwned}
-            <TagAction menuItem />
-          {/if}
-
-          {#if isOwned || assetInteraction.isAllUserOwned}
-            <!-- RemoveFromFolder would go here -->
-          {/if}
-          {#if assetInteraction.isAllUserOwned}
-            <DeleteAssets menuItem onAssetDelete={handleRemoveAssets} onUndoDelete={handleUndoRemoveAssets} />
-          {/if}
-        </ButtonContextMenu>
-      </AssetSelectControlBar>
-    {:else}
-      {#if viewMode === AlbumPageViewMode.VIEW}
-        <ControlAppBar showBackButton backIcon={mdiArrowLeft} onClose={() => goto(backUrl)}>
-          {#snippet trailing()}
-            <CastButton />
-
-            {#if isEditor}
-              <IconButton
-                variant="ghost"
-                shape="round"
-                color="secondary"
-                aria-label={$t('add_photos')}
-                onclick={async () => {
-                  timelineManager.suspendTransitions = true;
-                  viewMode = AlbumPageViewMode.SELECT_ASSETS;
-                  oldAt = { at: $gridScrollTarget?.at };
-                  await navigate(
-                    { targetRoute: 'current', assetId: null, assetGridRouteSearchParams: { at: null } },
-                    { replaceState: true },
-                  );
-                }}
-                icon={mdiImagePlusOutline}
-              />
-            {/if}
-
-            {#if isOwned}
-              <IconButton
-                shape="round"
-                variant="ghost"
-                color="secondary"
-                aria-label={$t('share')}
-                onclick={handleShare}
-                icon={mdiShareVariantOutline}
-              />
-            {/if}
-
-            {#if folder.assetCount > 0}
-              <IconButton
-                shape="round"
-                variant="ghost"
-                color="secondary"
-                aria-label={$t('slideshow')}
-                onclick={handleStartSlideshow}
-                icon={mdiPresentationPlay}
-              />
-              <IconButton
-                shape="round"
-                variant="ghost"
-                color="secondary"
-                aria-label={$t('download')}
-                onclick={() => handleDownloadFolder(folder)}
-                icon={mdiDownload}
-              />
-            {/if}
-
-            {#if isOwned}
-              <ButtonContextMenu
-                icon={mdiDotsVertical}
-                title={$t('folder_options')}
-                color="secondary"
-                offset={{ x: 175, y: 25 }}
-              >
-                {#if containsEditors}
-                  <MenuOption
-                    icon={showFolderUsers ? mdiAccountEye : mdiAccountEyeOutline}
-                    text={$t('view_asset_owners')}
-                    onClick={() => timelineManager.toggleShowAssetOwners()}
-                  />
-                {/if}
-                <MenuOption
-                  icon={mdiFolderPlusOutline}
-                  text={$t('create_subfolder')}
-                  onClick={() => createSubfolderAndRedirect(folder.id)}
-                />
-                {#if folder.assetCount > 0}
-                  <MenuOption
-                    icon={mdiImageOutline}
-                    text={$t('select_folder_cover')}
-                    onClick={() => (viewMode = AlbumPageViewMode.SELECT_THUMBNAIL)}
-                  />
-                  <MenuOption icon={mdiCogOutline} text={$t('options')} onClick={handleOptions} />
-                {/if}
-
-                <MenuOption
-                  icon={mdiDeleteOutline}
-                  text={$t('delete_folder')}
-                  onClick={() => handleDeleteFolder(folder)}
-                />
-              </ButtonContextMenu>
-            {/if}
-
-            {#if isCreatingSharedFolder && folderUsers.length === 0}
-              <Button size="small" disabled={folder.assetCount === 0} onclick={handleShare}>
-                {$t('share')}
-              </Button>
-            {/if}
-          {/snippet}
-        </ControlAppBar>
-      {/if}
-
-      {#if viewMode === AlbumPageViewMode.SELECT_ASSETS}
-        <ControlAppBar onClose={handleCloseSelectAssets}>
-          {#snippet leading()}
-            <p class="text-lg dark:text-immich-dark-fg">
-              {#if !timelineInteraction.selectionActive}
-                {$t('add_to_folder')}
-              {:else}
-                {$t('selected_count', { values: { count: timelineInteraction.selectedAssets.length } })}
-              {/if}
-            </p>
-          {/snippet}
-
-          {#snippet trailing()}
-            <Button variant="ghost" leadingIcon={mdiUpload} onclick={handleSelectFromComputer}
-              >{$t('select_from_computer')}</Button
-            >
-            <Button disabled={!timelineInteraction.selectionActive} onclick={handleAddAssets}>{$t('done')}</Button>
-          {/snippet}
-        </ControlAppBar>
-      {/if}
-
-      {#if viewMode === AlbumPageViewMode.SELECT_THUMBNAIL}
-        <ControlAppBar onClose={() => (viewMode = AlbumPageViewMode.VIEW)}>
-          {#snippet leading()}
-            {$t('select_folder_cover')}
-          {/snippet}
-        </ControlAppBar>
-      {/if}
-    {/if}
-  </div>
-  {#if folderUsers.length > 0 && folder && isShowActivity && $user && !$showAssetViewer}
-    <div class="flex">
-      <div
-        transition:fly={{ duration: 150 }}
-        id="activity-panel"
-        class="z-2 w-90 md:w-115 overflow-y-auto transition-all dark:border-l dark:border-s-immich-dark-gray"
-        translate="yes"
-      >
-        <ActivityViewer
-          user={$user}
-          disabled={!folder.isActivityEnabled}
-          albumOwnerId={folder.ownerId}
-          albumId={folder.id}
-          onClose={handleOpenAndCloseActivityTab}
+<UserPageLayout title={folder.folderName} use={[[scrollMemory, { routeStartsWith: AppRoute.FOLDERS }]]}>
+  {#snippet buttons()}
+    <div class="flex place-items-center gap-2">
+      <IconButton
+        variant="ghost"
+        shape="round"
+        color="secondary"
+        aria-label={$t('back')}
+        icon={mdiArrowLeft}
+        onclick={() => goto(backUrl)}
+      />
+      <ButtonContextMenu icon={mdiPlusBoxOutline} title={$t('create')}>
+        <MenuOption
+          icon={mdiFolderPlusOutline}
+          text={$t('create_subfolder')}
+          onClick={async () => {
+            await createSubfolder(folder.id);
+            await invalidateAll();
+          }}
         />
-      </div>
+        <MenuOption
+          icon={mdiImagePlusOutline}
+          text={$t('create_album')}
+          onClick={async () => {
+            await createAlbum();
+            await invalidateAll();
+          }}
+        />
+      </ButtonContextMenu>
+    </div>
+  {/snippet}
+
+  <!-- Subfolders -->
+  <Folders
+    ownedFolders={subfolders}
+    sharedFolders={[]}
+    userSettings={$folderViewSettings}
+    allowEdit
+    searchQuery=""
+    folderGroupIds={[]}
+    onlyRootFolders={false}
+  >
+    {#snippet empty()}
+      {#if albums.length === 0}
+        <EmptyPlaceholder
+          text={$t('empty_folder')}
+          class="mt-10 mx-auto"
+        />
+      {/if}
+    {/snippet}
+  </Folders>
+
+  <!-- Albums -->
+  {#if albums.length > 0}
+    <div class="mt-8">
+      <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase">
+        {$t('albums')}
+      </h2>
+      <AlbumCardGroup
+        albums={albums}
+        showDateRange={false}
+        showItemCount={true}
+      />
     </div>
   {/if}
-</div>
-
-<style>
-  ::placeholder {
-    color: rgb(60, 60, 60);
-    opacity: 0.6;
-  }
-
-  ::-ms-input-placeholder {
-    /* Edge 12 -18 */
-    color: white;
-  }
-</style>
+</UserPageLayout>

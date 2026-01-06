@@ -45,6 +45,7 @@
     showOwner?: boolean;
     folderGroupIds?: string[];
     empty?: Snippet;
+    onlyRootFolders?: boolean; // If true, only show folders with no parent
   }
 
   let {
@@ -56,6 +57,7 @@
     showOwner = false,
     folderGroupIds = $bindable([]),
     empty,
+    onlyRootFolders = false,
   }: Props = $props();
 
   interface FolderGroupOption {
@@ -146,13 +148,19 @@
 
   let albums = $derived.by(() => {
     const filter = userSettings.filter;
+    let folders: FolderResponseDto[];
     if (filter === FolderFilter.Owned) {
-      return ownedFolders;
+      folders = ownedFolders;
+    } else if (filter === FolderFilter.Shared) {
+      folders = sharedFolders;
+    } else {
+      folders = [...ownedFolders, ...sharedFolders];
     }
-    if (filter === FolderFilter.Shared) {
-      return sharedFolders;
+    // Only show root folders (folders with no parent) if onlyRootFolders is true
+    if (onlyRootFolders) {
+      return folders.filter((folder) => !folder.parentId);
     }
-    return [...ownedFolders, ...sharedFolders];
+    return folders;
   });
 
   const normalizedSearchQuery = $derived(normalizeSearchString(searchQuery));
@@ -279,7 +287,17 @@
 
   const onFolderUpdate = (folder: FolderResponseDto) => {
     onUpdate(folder);
-    userInteraction.recentFolders = findAndUpdate(userInteraction.recentFolders || [], folder);
+    // Only update cache if it's a root folder (no parent)
+    if (!folder.parentId) {
+      userInteraction.recentFolders = findAndUpdate(userInteraction.recentFolders || [], folder);
+      // Keep only root folders in cache and limit to 3 most recent
+      if (userInteraction.recentFolders) {
+        userInteraction.recentFolders = userInteraction.recentFolders
+          .filter((f) => !f.parentId)
+          .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+          .slice(0, 3);
+      }
+    }
   };
 
   const onFolderDelete = (folder: FolderResponseDto) => {

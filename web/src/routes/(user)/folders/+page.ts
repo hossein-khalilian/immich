@@ -5,8 +5,8 @@ import type { PageLoad } from './$types';
 
 export const load = (async ({ url, fetch }) => {
   await authenticate(url);
-  const sharedFolders = await getAllFolders({ shared: true }, fetch);
-  const folders = await getAllFolders({}, fetch);
+  const sharedFolders = await getAllFolders({ shared: true, parentId: null }, fetch);
+  const folders = await getAllFolders({ parentId: null }, fetch); // Only root folders (no parent)
   const $t = await getFormatter();
 
   return {

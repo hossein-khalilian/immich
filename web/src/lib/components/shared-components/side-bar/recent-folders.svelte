@@ -7,17 +7,40 @@
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
 
-  let folders: FolderResponseDto[] = $state([]);
+  // Always filter to only show root folders (no parent)
+  let folders = $derived.by(() => {
+    if (!userInteraction.recentFolders) {
+      return [];
+    }
+    return userInteraction.recentFolders
+      .filter((folder) => !folder.parentId)
+      .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+      .slice(0, 3);
+  });
+
+  // Clean cache immediately to ensure it only contains root folders
+  $effect(() => {
+    if (userInteraction.recentFolders && userInteraction.recentFolders.length > 0) {
+      const rootFolders = userInteraction.recentFolders.filter((folder) => !folder.parentId);
+      // Only update if there are child folders to remove (to avoid infinite loop)
+      if (rootFolders.length !== userInteraction.recentFolders.length) {
+        userInteraction.recentFolders = rootFolders
+          .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+          .slice(0, 3);
+      }
+    }
+  });
 
   onMount(async () => {
-    if (userInteraction.recentFolders) {
-      folders = userInteraction.recentFolders;
+    if (userInteraction.recentFolders && userInteraction.recentFolders.length > 0) {
+      // Cache exists, but we'll use the derived value which filters it
       return;
     }
     try {
-      const allFolders = await getAllFolders({});
-      folders = allFolders.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1)).slice(0, 3);
-      userInteraction.recentFolders = folders;
+      // Only fetch root folders (folders with no parent)
+      const rootFolders = await getAllFolders({ parentId: null });
+      const sortedFolders = rootFolders.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1)).slice(0, 3);
+      userInteraction.recentFolders = sortedFolders;
     } catch (error) {
       handleError(error, $t('failed_to_load_assets'));
     }

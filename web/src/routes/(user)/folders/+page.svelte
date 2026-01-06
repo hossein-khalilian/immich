@@ -8,7 +8,8 @@
   import GroupTab from '$lib/elements/GroupTab.svelte';
   import SearchBar from '$lib/elements/SearchBar.svelte';
   import { FolderFilter, folderViewSettings } from '$lib/stores/preferences.store';
-  import { createFolderAndRedirect } from '$lib/utils/folder-utils';
+  import { createFolder } from '$lib/utils/folder-utils';
+  import { invalidateAll } from '$app/navigation';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
 
@@ -50,9 +51,17 @@
     allowEdit
     {searchQuery}
     bind:folderGroupIds={folderGroups}
+    onlyRootFolders={true}
   >
     {#snippet empty()}
-      <EmptyPlaceholder text={$t('no_folders_message')} onClick={() => createFolderAndRedirect()} class="mt-10 mx-auto" />
+      <EmptyPlaceholder
+        text={$t('no_folders_message')}
+        onClick={async () => {
+          await createFolder();
+          await invalidateAll();
+        }}
+        class="mt-10 mx-auto"
+      />
     {/snippet}
   </Folders>
 </UserPageLayout>
