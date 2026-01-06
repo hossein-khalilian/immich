@@ -44,8 +44,8 @@
   import { cancelMultiselect } from '$lib/utils/asset-utils';
   import { openFileUploadDialog } from '$lib/utils/file-uploader';
   import { addAssetsToFolder, addUsersToFolder, getFolderInfo, updateFolderInfo } from '$lib/utils/folder-api';
-  import { createAlbum } from '$lib/utils/album-utils';
   import FolderCreateModal from '$lib/modals/FolderCreateModal.svelte';
+  import AlbumCreateModal from '$lib/modals/AlbumCreateModal.svelte';
   import { invalidateAll } from '$app/navigation';
   import Folders from '$lib/components/folder-page/folders-list.svelte';
   import AlbumCardGroup from '$lib/components/album-page/album-card-group.svelte';
@@ -433,7 +433,7 @@
       <ButtonContextMenu icon={mdiPlusBoxOutline} title={$t('create')}>
         <MenuOption
           icon={mdiFolderPlusOutline}
-          text={$t('create_subfolder')}
+          text={$t('create_folder')}
           onClick={async () => {
             const result = await modalManager.show(FolderCreateModal, { parentId: folder.id });
             if (result) {
@@ -445,8 +445,10 @@
           icon={mdiImagePlusOutline}
           text={$t('create_album')}
           onClick={async () => {
-            await createAlbum();
-            await invalidateAll();
+            const result = await modalManager.show(AlbumCreateModal, {});
+            if (result) {
+              await invalidateAll();
+            }
           }}
         />
       </ButtonContextMenu>
