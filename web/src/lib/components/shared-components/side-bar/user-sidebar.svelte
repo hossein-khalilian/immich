@@ -1,11 +1,10 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import BottomInfo from '$lib/components/shared-components/side-bar/bottom-info.svelte';
-  import RecentAlbums from '$lib/components/shared-components/side-bar/recent-albums.svelte';
-  import RecentFolders from '$lib/components/shared-components/side-bar/recent-folders.svelte';
+  import RecentLibraryItems from '$lib/components/shared-components/side-bar/recent-library-items.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
-  import { recentAlbumsDropdown, recentFoldersDropdown } from '$lib/stores/preferences.store';
+  import { recentFoldersDropdown } from '$lib/stores/preferences.store';
   import { preferences } from '$lib/stores/user.store';
   import {
     mdiAccount,
@@ -17,7 +16,6 @@
     mdiFolderOutline,
     mdiHeart,
     mdiHeartOutline,
-    mdiImageAlbum,
     mdiImageMultiple,
     mdiImageMultipleOutline,
     mdiLink,
@@ -98,21 +96,7 @@
   ></SideBarLink>
 
   <SideBarLink
-    title={$t('albums')}
-    href={resolve('/(user)/albums')}
-    icon={mdiImageAlbum}
-    flippedLogo
-    bind:dropdownOpen={$recentAlbumsDropdown}
-  >
-    {#snippet dropDownContent()}
-      <span in:fly={{ y: -20 }} class="hidden md:block">
-        <RecentAlbums />
-      </span>
-    {/snippet}
-  </SideBarLink>
-
-  <SideBarLink
-    title={$t('folders')}
+    title={$t('library')}
     href={resolve('/(user)/folders')}
     icon={mdiFolderOutline}
     flippedLogo
@@ -120,7 +104,7 @@
   >
     {#snippet dropDownContent()}
       <span in:fly={{ y: -20 }} class="hidden md:block">
-        <RecentFolders />
+        <RecentLibraryItems />
       </span>
     {/snippet}
   </SideBarLink>
