@@ -190,19 +190,6 @@ export const folder_delete_audit = registerFunction({
     END`,
 });
 
-export const folder_asset_delete_audit = registerFunction({
-  name: 'folder_asset_delete_audit',
-  returnType: 'TRIGGER',
-  language: 'PLPGSQL',
-  body: `
-    BEGIN
-      INSERT INTO folder_asset_audit ("folderId", "assetId")
-      SELECT "folderId", "assetId" FROM OLD
-      WHERE "folderId" IN (SELECT "id" FROM folder WHERE "id" IN (SELECT "folderId" FROM OLD));
-      RETURN NULL;
-    END`,
-});
-
 export const folder_user_delete_audit = registerFunction({
   name: 'folder_user_delete_audit',
   returnType: 'TRIGGER',

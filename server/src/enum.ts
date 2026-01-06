@@ -130,8 +130,8 @@ export enum Permission {
   FolderShare = 'folder.share',
   FolderDownload = 'folder.download',
 
-  FolderAssetCreate = 'folderAsset.create',
-  FolderAssetDelete = 'folderAsset.delete',
+  FolderAlbumCreate = 'folderAlbum.create',
+  FolderAlbumDelete = 'folderAlbum.delete',
 
   FolderUserCreate = 'folderUser.create',
   FolderUserUpdate = 'folderUser.update',

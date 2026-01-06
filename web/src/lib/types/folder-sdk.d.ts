@@ -3,6 +3,21 @@
 
 import type { AlbumUserRole } from '@immich/sdk';
 
+export interface FolderAlbumResponseDto {
+  id: string;
+  albumName: string;
+  description: string;
+  assetCount: number;
+  createdAt: string;
+  updatedAt: string;
+  albumThumbnailAssetId?: string | null;
+  owner?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface FolderResponseDto {
   id: string;
   ownerId: string;
@@ -16,6 +31,7 @@ export interface FolderResponseDto {
   order: string;
   updateId: string;
   assetCount: number;
+  albumCount: number;
   shared: boolean;
   hasSharedLink?: boolean;
   owner?: {
@@ -31,6 +47,7 @@ export interface FolderResponseDto {
     };
     role: AlbumUserRole;
   }>;
+  albums?: FolderAlbumResponseDto[];
   startDate?: string;
   endDate?: string;
   parentId?: string | null;

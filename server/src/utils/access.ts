@@ -219,7 +219,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       return setUnion(isOwner, isShared);
     }
 
-    case Permission.FolderAssetCreate: {
+    case Permission.FolderAlbumCreate: {
       const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
       const isShared = await access.folder.checkSharedFolderAccess(
         auth.user.id,
@@ -251,7 +251,7 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
       return setUnion(isOwner, isShared);
     }
 
-    case Permission.FolderAssetDelete: {
+    case Permission.FolderAlbumDelete: {
       const isOwner = await access.folder.checkOwnerAccess(auth.user.id, ids);
       const isShared = await access.folder.checkSharedFolderAccess(
         auth.user.id,

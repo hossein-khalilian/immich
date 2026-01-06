@@ -42,8 +42,7 @@ import { AssetOcrTable } from 'src/schema/tables/asset-ocr.table';
 import { AssetTable } from 'src/schema/tables/asset.table';
 import { AuditTable } from 'src/schema/tables/audit.table';
 import { FaceSearchTable } from 'src/schema/tables/face-search.table';
-import { FolderAssetAuditTable } from 'src/schema/tables/folder-asset-audit.table';
-import { FolderAssetTable } from 'src/schema/tables/folder-asset.table';
+import { FolderAlbumTable } from 'src/schema/tables/folder-album.table';
 import { FolderAuditTable } from 'src/schema/tables/folder-audit.table';
 import { FolderClosureTable } from 'src/schema/tables/folder-closure.table';
 import { FolderUserAuditTable } from 'src/schema/tables/folder-user-audit.table';
@@ -107,8 +106,7 @@ export class ImmichDatabase {
     AuditTable,
     AssetExifTable,
     FaceSearchTable,
-    FolderAssetTable,
-    FolderAssetAuditTable,
+    FolderAlbumTable,
     FolderAuditTable,
     FolderClosureTable,
     FolderUserAuditTable,
@@ -214,9 +212,8 @@ export interface DB {
   face_search: FaceSearchTable;
 
   folder: FolderTable;
+  folder_album: FolderAlbumTable;
   folder_audit: FolderAuditTable;
-  folder_asset: FolderAssetTable;
-  folder_asset_audit: FolderAssetAuditTable;
   folder_closure: FolderClosureTable;
   folder_user: FolderUserTable;
   folder_user_audit: FolderUserAuditTable;

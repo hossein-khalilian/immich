@@ -53,6 +53,10 @@ export class CreateAlbumDto {
 
   @ValidateUUID({ optional: true, each: true })
   assetIds?: string[];
+
+  @ValidateUUID({ optional: true })
+  @ApiProperty({ required: false, type: String, format: 'uuid' })
+  folderId?: string;
 }
 
 export class AlbumsAddAssetsDto {

@@ -1,9 +1,7 @@
 import { UpdatedAtTrigger, UpdateIdColumn } from 'src/decorators';
-import { folder_asset_delete_audit } from 'src/schema/functions';
+import { AlbumTable } from 'src/schema/tables/album.table';
 import { FolderTable } from 'src/schema/tables/folder.table';
-import { AssetTable } from 'src/schema/tables/asset.table';
 import {
-  AfterDeleteTrigger,
   CreateDateColumn,
   ForeignKeyColumn,
   Generated,
@@ -12,20 +10,14 @@ import {
   UpdateDateColumn,
 } from 'src/sql-tools';
 
-@Table({ name: 'folder_asset' })
-@UpdatedAtTrigger('folder_asset_updatedAt')
-@AfterDeleteTrigger({
-  scope: 'statement',
-  function: folder_asset_delete_audit,
-  referencingOldTableAs: 'old',
-  when: 'pg_trigger_depth() <= 1',
-})
-export class FolderAssetTable {
+@Table({ name: 'folder_album' })
+@UpdatedAtTrigger('folder_album_updatedAt')
+export class FolderAlbumTable {
   @ForeignKeyColumn(() => FolderTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: false, primary: true })
   folderId!: string;
 
-  @ForeignKeyColumn(() => AssetTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: false, primary: true })
-  assetId!: string;
+  @ForeignKeyColumn(() => AlbumTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: false, primary: true })
+  albumId!: string;
 
   @CreateDateColumn()
   createdAt!: Generated<Timestamp>;

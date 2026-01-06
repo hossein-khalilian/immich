@@ -21,12 +21,13 @@ import { get } from 'svelte/store';
  * Albums General Management
  * -------------------------
  */
-export const createAlbum = async (name?: string, assetIds?: string[]) => {
+export const createAlbum = async (name?: string, assetIds?: string[], folderId?: string) => {
   try {
     const newAlbum: AlbumResponseDto = await sdk.createAlbum({
       createAlbumDto: {
         albumName: name ?? '',
         assetIds,
+        folderId,
       },
     });
     return newAlbum;

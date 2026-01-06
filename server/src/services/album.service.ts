@@ -107,6 +107,15 @@ export class AlbumService extends BaseService {
       }
     }
 
+    // Validate folder access if folderId is provided
+    if (dto.folderId) {
+      await this.requireAccess({ auth, permission: Permission.FolderRead, ids: [dto.folderId] });
+      const folder = await this.folderRepository.getById(dto.folderId, { withAlbums: false });
+      if (!folder) {
+        throw new BadRequestException('Folder not found');
+      }
+    }
+
     const allowedAssetIdsSet = await this.checkAccess({
       auth,
       permission: Permission.AssetShare,
@@ -127,6 +136,24 @@ export class AlbumService extends BaseService {
       assetIds,
       albumUsers,
     );
+
+    // If folderId is provided, add the album to the folder
+    if (dto.folderId) {
+      await this.requireAccess({ auth, permission: Permission.FolderAlbumCreate, ids: [dto.folderId] });
+      
+      // Add the album to the folder (onConflict handles duplicates gracefully)
+      await this.folderRepository.addAlbumIds(dto.folderId, [album.id]);
+      
+      // Update folder thumbnail if needed (use album thumbnail if available)
+      const folder = await this.folderRepository.getById(dto.folderId, { withAlbums: false });
+      if (folder && !folder.folderThumbnailAssetId && album.albumThumbnailAssetId) {
+        await this.folderRepository.update(dto.folderId, {
+          id: dto.folderId,
+          updatedAt: new Date(),
+          folderThumbnailAssetId: album.albumThumbnailAssetId,
+        });
+      }
+    }
 
     for (const { userId } of albumUsers) {
       await this.eventRepository.emit('AlbumInvite', { id: album.id, userId });

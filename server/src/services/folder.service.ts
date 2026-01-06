@@ -3,24 +3,23 @@ import {
   AddFolderUsersDto,
   FolderInfoDto,
   FolderResponseDto,
-  FoldersAddAssetsDto,
-  FoldersAddAssetsResponseDto,
+  FoldersAddAlbumsDto,
+  FoldersAddAlbumsResponseDto,
   FolderStatisticsResponseDto,
   CreateFolderDto,
   GetFoldersDto,
   mapFolder,
   MapFolderDto,
-  mapFolderWithAssets,
-  mapFolderWithoutAssets,
+  mapFolderWithAlbums,
+  mapFolderWithoutAlbums,
   UpdateFolderDto,
   UpdateFolderUserDto,
 } from 'src/dtos/folder.dto';
 import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { Permission } from 'src/enum';
-import { FolderAssetCount, FolderInfoOptions, FolderSubfolderCount } from 'src/repositories/folder.repository';
+import { FolderAlbumCount, FolderInfoOptions, FolderSubfolderCount } from 'src/repositories/folder.repository';
 import { BaseService } from 'src/services/base.service';
-import { addAssets, removeAssets } from 'src/utils/asset.util';
 import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
@@ -39,12 +38,12 @@ export class FolderService extends BaseService {
     };
   }
 
-  async getAll({ user: { id: ownerId } }: AuthDto, { assetId, shared, parentId }: GetFoldersDto): Promise<FolderResponseDto[]> {
+  async getAll({ user: { id: ownerId } }: AuthDto, { albumId, shared, parentId }: GetFoldersDto): Promise<FolderResponseDto[]> {
     await this.folderRepository.updateThumbnails();
 
     let folders: MapFolderDto[];
-    if (assetId) {
-      folders = await this.folderRepository.getByAssetId(ownerId, assetId);
+    if (albumId) {
+      folders = await this.folderRepository.getByAlbumId(ownerId, albumId);
     } else if (shared === true) {
       folders = await this.folderRepository.getShared(ownerId);
     } else if (shared === false) {
@@ -53,11 +52,11 @@ export class FolderService extends BaseService {
       folders = await this.folderRepository.getOwned(ownerId, parentId);
     }
 
-    // Get asset count for each folder. Then map the result to an object:
-    // { [folderId]: assetCount }
+    // Get album count for each folder. Then map the result to an object:
+    // { [folderId]: albumCount }
     const folderIds = folders.map((folder) => folder.id);
     const results = await this.folderRepository.getMetadataForIds(folderIds);
-    const folderMetadata: Record<string, FolderAssetCount> = {};
+    const folderMetadata: Record<string, FolderAlbumCount> = {};
     for (const metadata of results) {
       folderMetadata[metadata.folderId] = metadata;
     }
@@ -70,22 +69,22 @@ export class FolderService extends BaseService {
     }
 
     return folders.map((folder) => ({
-      ...mapFolderWithoutAssets(folder),
+      ...mapFolderWithoutAlbums(folder),
       sharedLinks: undefined,
       startDate: folderMetadata[folder.id]?.startDate ?? undefined,
       endDate: folderMetadata[folder.id]?.endDate ?? undefined,
-      assetCount: folderMetadata[folder.id]?.assetCount ?? 0,
+      albumCount: folderMetadata[folder.id]?.albumCount ?? 0,
       subfolderCount: subfolderCounts[folder.id]?.subfolderCount ?? 0,
-      // lastModifiedAssetTimestamp is only used in mobile app, please remove if not need
-      lastModifiedAssetTimestamp: folderMetadata[folder.id]?.lastModifiedAssetTimestamp ?? undefined,
+      // lastModifiedAlbumTimestamp is only used in mobile app, please remove if not need
+      lastModifiedAlbumTimestamp: folderMetadata[folder.id]?.lastModifiedAlbumTimestamp ?? undefined,
     }));
   }
 
   async get(auth: AuthDto, id: string, dto: FolderInfoDto): Promise<FolderResponseDto> {
     await this.requireAccess({ auth, permission: Permission.FolderRead, ids: [id] });
     await this.folderRepository.updateThumbnails();
-    const withAssets = dto.withoutAssets === undefined ? true : !dto.withoutAssets;
-    const folder = await this.findOrFail(id, { withAssets });
+    const withAlbums = dto.withoutAlbums === undefined ? true : !dto.withoutAlbums;
+    const folder = await this.findOrFail(id, { withAlbums });
     const [folderMetadataForIds] = await this.folderRepository.getMetadataForIds([folder.id]);
 
     const hasSharedUsers = folder.folderUsers && folder.folderUsers.length > 0;
@@ -93,11 +92,11 @@ export class FolderService extends BaseService {
     const isShared = hasSharedUsers || hasSharedLink;
 
     return {
-      ...mapFolder(folder, withAssets, auth),
+      ...mapFolder(folder, withAlbums, auth),
       startDate: folderMetadataForIds?.startDate ?? undefined,
       endDate: folderMetadataForIds?.endDate ?? undefined,
-      assetCount: folderMetadataForIds?.assetCount ?? 0,
-      lastModifiedAssetTimestamp: folderMetadataForIds?.lastModifiedAssetTimestamp ?? undefined,
+      albumCount: folderMetadataForIds?.albumCount ?? 0,
+      lastModifiedAlbumTimestamp: folderMetadataForIds?.lastModifiedAlbumTimestamp ?? undefined,
       contributorCounts: isShared ? await this.folderRepository.getContributorCounts(folder.id) : undefined,
     };
   }
@@ -119,18 +118,19 @@ export class FolderService extends BaseService {
     // Validate parent folder if provided
     if (dto.parentId) {
       await this.requireAccess({ auth, permission: Permission.FolderRead, ids: [dto.parentId] });
-      const parentFolder = await this.folderRepository.getById(dto.parentId, { withAssets: false });
+      const parentFolder = await this.folderRepository.getById(dto.parentId, { withAlbums: false });
       if (!parentFolder) {
         throw new BadRequestException('Parent folder not found');
       }
     }
 
-    const allowedAssetIdsSet = await this.checkAccess({
+    // Validate album access
+    const allowedAlbumIdsSet = await this.checkAccess({
       auth,
-      permission: Permission.AssetShare,
-      ids: dto.assetIds || [],
+      permission: Permission.AlbumRead,
+      ids: dto.albumIds || [],
     });
-    const assetIds = [...allowedAssetIdsSet].map((id) => id);
+    const albumIds = [...allowedAlbumIdsSet].map((id) => id);
 
     const userMetadata = await this.userRepository.getMetadata(auth.user.id);
 
@@ -140,11 +140,11 @@ export class FolderService extends BaseService {
         folderName: dto.folderName || 'Untitled Folder',
         name: dto.folderName || 'Untitled Folder',
         description: dto.description,
-        folderThumbnailAssetId: assetIds[0] || null,
+        folderThumbnailAssetId: null,
         order: getPreferences(userMetadata).albums.defaultAssetOrder,
         parentId: dto.parentId ?? null,
       },
-      assetIds,
+      albumIds,
       folderUsers,
     );
 
@@ -152,17 +152,18 @@ export class FolderService extends BaseService {
       await this.eventRepository.emit('FolderInvite', { id: folder.id, userId });
     }
 
-    return mapFolderWithAssets(folder);
+    return mapFolderWithAlbums(folder);
   }
 
   async update(auth: AuthDto, id: string, dto: UpdateFolderDto): Promise<FolderResponseDto> {
     await this.requireAccess({ auth, permission: Permission.FolderUpdate, ids: [id] });
 
-    const folder = await this.findOrFail(id, { withAssets: true });
+    const folder = await this.findOrFail(id, { withAlbums: true });
 
     if (dto.folderThumbnailAssetId) {
-      const results = await this.folderRepository.getAssetIds(id, [dto.folderThumbnailAssetId]);
-      if (results.size === 0) {
+      // Validate that the thumbnail asset exists and user has access
+      const exists = await this.accessRepository.asset.checkOwnerAccess(auth.user.id, new Set([dto.folderThumbnailAssetId]), false);
+      if (exists.size === 0) {
         throw new BadRequestException('Invalid folder thumbnail');
       }
     }
@@ -172,7 +173,7 @@ export class FolderService extends BaseService {
       // Validate new parent if provided
       if (dto.parentId !== null) {
         await this.requireAccess({ auth, permission: Permission.FolderRead, ids: [dto.parentId] });
-        const parentFolder = await this.folderRepository.getById(dto.parentId, { withAssets: false });
+        const parentFolder = await this.folderRepository.getById(dto.parentId, { withAlbums: false });
         if (!parentFolder) {
           throw new BadRequestException('Parent folder not found');
         }
@@ -198,7 +199,7 @@ export class FolderService extends BaseService {
       order: dto.order,
     });
 
-    return mapFolderWithoutAssets({ ...updatedFolder, assets: folder.assets });
+    return mapFolderWithoutAlbums({ ...updatedFolder, albums: folder.albums });
   }
 
   async delete(auth: AuthDto, id: string): Promise<void> {
@@ -206,23 +207,40 @@ export class FolderService extends BaseService {
     await this.folderRepository.delete(id);
   }
 
-  async addAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
-    const folder = await this.findOrFail(id, { withAssets: false });
-    await this.requireAccess({ auth, permission: Permission.FolderAssetCreate, ids: [id] });
+  async addAlbums(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
+    const folder = await this.findOrFail(id, { withAlbums: false });
+    await this.requireAccess({ auth, permission: Permission.FolderUpdate, ids: [id] });
 
-    const results = await addAssets(
+    const results: BulkIdResponseDto[] = [];
+
+    // Check album access
+    const allowedAlbumIds = await this.checkAccess({
       auth,
-      { access: this.accessRepository, bulk: this.folderRepository },
-      { parentId: id, assetIds: dto.ids },
-    );
+      permission: Permission.AlbumRead,
+      ids: dto.ids,
+    });
 
-    const { id: firstNewAssetId } = results.find(({ success }) => success) || {};
-    if (firstNewAssetId) {
-      await this.folderRepository.update(id, {
-        id,
-        updatedAt: new Date(),
-        folderThumbnailAssetId: folder.folderThumbnailAssetId ?? firstNewAssetId,
-      });
+    // Check which albums are already in the folder
+    const existingAlbumIds = await this.folderRepository.getAlbumIds(id, [...allowedAlbumIds]);
+
+    for (const albumId of dto.ids) {
+      if (!allowedAlbumIds.has(albumId)) {
+        results.push({ id: albumId, success: false, error: BulkIdErrorReason.NO_PERMISSION });
+        continue;
+      }
+
+      if (existingAlbumIds.has(albumId)) {
+        results.push({ id: albumId, success: false, error: BulkIdErrorReason.DUPLICATE });
+        continue;
+      }
+
+      results.push({ id: albumId, success: true });
+    }
+
+    const albumsToAdd = results.filter(({ success }) => success).map(({ id }) => id);
+    if (albumsToAdd.length > 0) {
+      await this.folderRepository.addAlbumIds(id, albumsToAdd);
+      await this.folderRepository.update(id, { id, updatedAt: new Date() });
 
       const allUsersExceptUs = [...folder.folderUsers.map(({ user }) => user.id), folder.owner.id].filter(
         (userId) => userId !== auth.user.id,
@@ -236,15 +254,15 @@ export class FolderService extends BaseService {
     return results;
   }
 
-  async addAssetsToFolders(auth: AuthDto, dto: FoldersAddAssetsDto): Promise<FoldersAddAssetsResponseDto> {
-    const results: FoldersAddAssetsResponseDto = {
+  async addAlbumsToFolders(auth: AuthDto, dto: FoldersAddAlbumsDto): Promise<FoldersAddAlbumsResponseDto> {
+    const results: FoldersAddAlbumsResponseDto = {
       success: false,
       error: BulkIdErrorReason.DUPLICATE,
     };
 
     const allowedFolderIds = await this.checkAccess({
       auth,
-      permission: Permission.FolderAssetCreate,
+      permission: Permission.FolderUpdate,
       ids: dto.folderIds,
     });
     if (allowedFolderIds.size === 0) {
@@ -252,31 +270,30 @@ export class FolderService extends BaseService {
       return results;
     }
 
-    const allowedAssetIds = await this.checkAccess({ auth, permission: Permission.AssetShare, ids: dto.assetIds });
-    if (allowedAssetIds.size === 0) {
+    const allowedAlbumIds = await this.checkAccess({ auth, permission: Permission.AlbumRead, ids: dto.albumIds });
+    if (allowedAlbumIds.size === 0) {
       results.error = BulkIdErrorReason.NO_PERMISSION;
       return results;
     }
 
-    const folderAssetValues: { folderId: string; assetId: string }[] = [];
+    const folderAlbumValues: { folderId: string; albumId: string }[] = [];
     const events: { id: string; recipients: string[] }[] = [];
     for (const folderId of allowedFolderIds) {
-      const existingAssetIds = await this.folderRepository.getAssetIds(folderId, [...allowedAssetIds]);
-      const notPresentAssetIds = [...allowedAssetIds].filter((id) => !existingAssetIds.has(id));
-      if (notPresentAssetIds.length === 0) {
+      const existingAlbumIds = await this.folderRepository.getAlbumIds(folderId, [...allowedAlbumIds]);
+      const notPresentAlbumIds = [...allowedAlbumIds].filter((id) => !existingAlbumIds.has(id));
+      if (notPresentAlbumIds.length === 0) {
         continue;
       }
-      const folder = await this.findOrFail(folderId, { withAssets: false });
+      const folder = await this.findOrFail(folderId, { withAlbums: false });
       results.error = undefined;
       results.success = true;
 
-      for (const assetId of notPresentAssetIds) {
-        folderAssetValues.push({ folderId, assetId });
+      for (const albumId of notPresentAlbumIds) {
+        folderAlbumValues.push({ folderId, albumId });
       }
       await this.folderRepository.update(folderId, {
         id: folderId,
         updatedAt: new Date(),
-        folderThumbnailAssetId: folder.folderThumbnailAssetId ?? notPresentAssetIds[0],
       });
       const allUsersExceptUs = [...folder.folderUsers.map(({ user }) => user.id), folder.owner.id].filter(
         (userId) => userId !== auth.user.id,
@@ -284,7 +301,7 @@ export class FolderService extends BaseService {
       events.push({ id: folderId, recipients: allUsersExceptUs });
     }
 
-    await this.folderRepository.addAssetIdsToFolders(folderAssetValues);
+    await this.folderRepository.addAlbumIdsToFolders(folderAlbumValues);
     for (const event of events) {
       for (const recipientId of event.recipients) {
         await this.eventRepository.emit('FolderUpdate', { id: event.id, recipientId });
@@ -294,19 +311,32 @@ export class FolderService extends BaseService {
     return results;
   }
 
-  async removeAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.FolderAssetDelete, ids: [id] });
+  async removeAlbums(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
+    await this.requireAccess({ auth, permission: Permission.FolderUpdate, ids: [id] });
 
-    const folder = await this.findOrFail(id, { withAssets: false });
-    const results = await removeAssets(
-      auth,
-      { access: this.accessRepository, bulk: this.folderRepository },
-      { parentId: id, assetIds: dto.ids, canAlwaysRemove: Permission.FolderDelete },
-    );
+    const folder = await this.findOrFail(id, { withAlbums: false });
+    
+    const results: BulkIdResponseDto[] = [];
 
-    const removedIds = results.filter(({ success }) => success).map(({ id }) => id);
-    if (removedIds.length > 0 && folder.folderThumbnailAssetId && removedIds.includes(folder.folderThumbnailAssetId)) {
-      await this.folderRepository.updateThumbnails();
+    // Check which albums are in the folder
+    const existingAlbumIds = await this.folderRepository.getAlbumIds(id, dto.ids);
+
+    for (const albumId of dto.ids) {
+      if (!existingAlbumIds.has(albumId)) {
+        results.push({ id: albumId, success: false, error: BulkIdErrorReason.NOT_FOUND });
+        continue;
+      }
+      results.push({ id: albumId, success: true });
+    }
+
+    const albumsToRemove = results.filter(({ success }) => success).map(({ id }) => id);
+    if (albumsToRemove.length > 0) {
+      await this.folderRepository.removeAlbumIds(id, albumsToRemove);
+      
+      // Update thumbnail if needed
+      if (folder.folderThumbnailAssetId) {
+        await this.folderRepository.updateThumbnails();
+      }
     }
 
     return results;
@@ -315,7 +345,7 @@ export class FolderService extends BaseService {
   async addUsers(auth: AuthDto, id: string, { folderUsers }: AddFolderUsersDto): Promise<FolderResponseDto> {
     await this.requireAccess({ auth, permission: Permission.FolderShare, ids: [id] });
 
-    const folder = await this.findOrFail(id, { withAssets: false });
+    const folder = await this.findOrFail(id, { withAlbums: false });
 
     for (const { userId, role } of folderUsers) {
       if (folder.ownerId === userId) {
@@ -336,7 +366,7 @@ export class FolderService extends BaseService {
       await this.eventRepository.emit('FolderInvite', { id, userId });
     }
 
-    return this.findOrFail(id, { withAssets: true }).then(mapFolderWithoutAssets);
+    return this.findOrFail(id, { withAlbums: true }).then(mapFolderWithoutAlbums);
   }
 
   async removeUser(auth: AuthDto, id: string, userId: string | 'me'): Promise<void> {
@@ -344,7 +374,7 @@ export class FolderService extends BaseService {
       userId = auth.user.id;
     }
 
-    const folder = await this.findOrFail(id, { withAssets: false });
+    const folder = await this.findOrFail(id, { withAlbums: false });
 
     if (folder.ownerId === userId) {
       throw new BadRequestException('Cannot remove folder owner');
@@ -377,10 +407,10 @@ export class FolderService extends BaseService {
 
     const folders = await this.folderRepository.getSubfolders(auth.user.id, id);
 
-    // Get asset counts
+    // Get album counts
     const folderIds = folders.map((folder) => folder.id);
     const results = await this.folderRepository.getMetadataForIds(folderIds);
-    const folderMetadata: Record<string, FolderAssetCount> = {};
+    const folderMetadata: Record<string, FolderAlbumCount> = {};
     for (const metadata of results) {
       folderMetadata[metadata.folderId] = metadata;
     }
@@ -393,13 +423,13 @@ export class FolderService extends BaseService {
     }
 
     return folders.map((folder) => ({
-      ...mapFolderWithoutAssets(folder),
+      ...mapFolderWithoutAlbums(folder),
       sharedLinks: undefined,
       startDate: folderMetadata[folder.id]?.startDate ?? undefined,
       endDate: folderMetadata[folder.id]?.endDate ?? undefined,
-      assetCount: folderMetadata[folder.id]?.assetCount ?? 0,
+      albumCount: folderMetadata[folder.id]?.albumCount ?? 0,
       subfolderCount: subfolderCounts[folder.id]?.subfolderCount ?? 0,
-      lastModifiedAssetTimestamp: folderMetadata[folder.id]?.lastModifiedAssetTimestamp ?? undefined,
+      lastModifiedAlbumTimestamp: folderMetadata[folder.id]?.lastModifiedAlbumTimestamp ?? undefined,
     }));
   }
 
@@ -411,7 +441,7 @@ export class FolderService extends BaseService {
 
     const ancestors = await this.folderRepository.getAncestors(id);
 
-    return ancestors.map((folder) => mapFolderWithoutAssets(folder));
+    return ancestors.map((folder) => mapFolderWithoutAlbums(folder));
   }
 
   private async findOrFail(id: string, options: FolderInfoOptions) {

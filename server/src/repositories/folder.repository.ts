@@ -2,23 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { ExpressionBuilder, Insertable, Kysely, NotNull, sql, SqlBool, Updateable } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import { InjectKysely } from 'nestjs-kysely';
-import { columns, Exif } from 'src/database';
+import { columns } from 'src/database';
 import { Chunked, ChunkedArray, ChunkedSet, DummyValue, GenerateSql } from 'src/decorators';
 import { FolderUserCreateDto } from 'src/dtos/folder.dto';
 import { DB } from 'src/schema';
 import { FolderTable } from 'src/schema/tables/folder.table';
-import { withDefaultVisibility } from 'src/utils/database';
 
-export interface FolderAssetCount {
+export interface FolderAlbumCount {
   folderId: string;
-  assetCount: number;
+  albumCount: number;
   startDate: Date | null;
   endDate: Date | null;
-  lastModifiedAssetTimestamp: Date | null;
+  lastModifiedAlbumTimestamp: Date | null;
 }
 
 export interface FolderInfoOptions {
-  withAssets: boolean;
+  withAlbums: boolean;
 }
 
 export interface FolderSubfolderCount {
@@ -57,30 +56,34 @@ const withSharedLink = (eb: ExpressionBuilder<DB, 'folder'>) => {
   ).as('sharedLinks');
 };
 
-const withAssets = (eb: ExpressionBuilder<DB, 'folder'>) => {
+const withAlbums = (eb: ExpressionBuilder<DB, 'folder'>) => {
   return eb
     .selectFrom((eb) =>
       eb
-        .selectFrom('asset')
-        .selectAll('asset')
-        .leftJoin('asset_exif', 'asset.id', 'asset_exif.assetId')
-        .select((eb) => eb.table('asset_exif').$castTo<Exif>().as('exifInfo'))
-        .innerJoin('folder_asset', 'folder_asset.assetId', 'asset.id')
-        .whereRef('folder_asset.folderId', '=', 'folder.id')
-        .where('asset.deletedAt', 'is', null)
-        .$call(withDefaultVisibility)
-        .orderBy('asset.fileCreatedAt', 'desc')
-        .as('asset'),
+        .selectFrom('album')
+        .select(['album.id', 'album.albumName', 'album.albumThumbnailAssetId'])
+        .select((eb) =>
+          eb
+            .selectFrom('album_asset')
+            .select((eb) => sql<number>`${eb.fn.count('album_asset.assetId')}::int`.as('assetCount'))
+            .whereRef('album_asset.albumId', '=', 'album.id')
+            .as('assetCount')
+        )
+        .innerJoin('folder_album', 'folder_album.albumId', 'album.id')
+        .whereRef('folder_album.folderId', '=', 'folder.id')
+        .where('album.deletedAt', 'is', null)
+        .orderBy('album.createdAt', 'desc')
+        .as('album'),
     )
-    .select((eb) => eb.fn.jsonAgg('asset').as('assets'))
-    .as('assets');
+    .select((eb) => eb.fn.jsonAgg('album').as('albums'))
+    .as('albums');
 };
 
 @Injectable()
 export class FolderRepository {
   constructor(@InjectKysely() private db: Kysely<DB>) {}
 
-  @GenerateSql({ params: [DummyValue.UUID, { withAssets: true }] })
+  @GenerateSql({ params: [DummyValue.UUID, { withAlbums: true }] })
   async getById(id: string, options: FolderInfoOptions) {
     return this.db
       .selectFrom('folder')
@@ -90,17 +93,17 @@ export class FolderRepository {
       .select(withOwner)
       .select(withFolderUsers)
       .select(withSharedLink)
-      .$if(options.withAssets, (eb) => eb.select(withAssets))
-      .$narrowType<{ assets: NotNull }>()
+      .$if(options.withAlbums, (eb) => eb.select(withAlbums))
+      .$narrowType<{ albums: NotNull }>()
       .executeTakeFirst();
   }
 
   @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID] })
-  async getByAssetId(ownerId: string, assetId: string) {
+  async getByAlbumId(ownerId: string, albumId: string) {
     return this.db
       .selectFrom('folder')
       .selectAll('folder')
-      .innerJoin('folder_asset', 'folder_asset.folderId', 'folder.id')
+      .innerJoin('folder_album', 'folder_album.folderId', 'folder.id')
       .where((eb) =>
         eb.or([
           eb('folder.ownerId', '=', ownerId),
@@ -112,7 +115,7 @@ export class FolderRepository {
           ),
         ]),
       )
-      .where('folder_asset.assetId', '=', assetId)
+      .where('folder_album.albumId', '=', albumId)
       .where('folder.deletedAt', 'is', null)
       .orderBy('folder.createdAt', 'desc')
       .select(withOwner)
@@ -123,7 +126,7 @@ export class FolderRepository {
 
   @GenerateSql({ params: [[DummyValue.UUID]] })
   @ChunkedArray()
-  async getMetadataForIds(ids: string[]): Promise<FolderAssetCount[]> {
+  async getMetadataForIds(ids: string[]): Promise<FolderAlbumCount[]> {
     // Guard against running invalid query when ids list is empty.
     if (ids.length === 0) {
       return [];
@@ -131,18 +134,16 @@ export class FolderRepository {
 
     return (
       this.db
-        .selectFrom('asset')
-        .$call(withDefaultVisibility)
-        .innerJoin('folder_asset', 'folder_asset.assetId', 'asset.id')
-        .select('folder_asset.folderId as folderId')
-        .select((eb) => eb.fn.min(sql<Date>`("asset"."localDateTime" AT TIME ZONE 'UTC'::text)::date`).as('startDate'))
-        .select((eb) => eb.fn.max(sql<Date>`("asset"."localDateTime" AT TIME ZONE 'UTC'::text)::date`).as('endDate'))
-        // lastModifiedAssetTimestamp is only used in mobile app, please remove if not need
-        .select((eb) => eb.fn.max('asset.updatedAt').as('lastModifiedAssetTimestamp'))
-        .select((eb) => sql<number>`${eb.fn.count('asset.id')}::int`.as('assetCount'))
-        .where('folder_asset.folderId', 'in', ids)
-        .where('asset.deletedAt', 'is', null)
-        .groupBy('folder_asset.folderId')
+        .selectFrom('album')
+        .innerJoin('folder_album', 'folder_album.albumId', 'album.id')
+        .select('folder_album.folderId as folderId')
+        .select((eb) => eb.fn.min(sql<Date>`("album"."createdAt" AT TIME ZONE 'UTC'::text)::date`).as('startDate'))
+        .select((eb) => eb.fn.max(sql<Date>`("album"."createdAt" AT TIME ZONE 'UTC'::text)::date`).as('endDate'))
+        .select((eb) => eb.fn.max('album.updatedAt').as('lastModifiedAlbumTimestamp'))
+        .select((eb) => sql<number>`${eb.fn.count('album.id')}::int`.as('albumCount'))
+        .where('folder_album.folderId', 'in', ids)
+        .where('album.deletedAt', 'is', null)
+        .groupBy('folder_album.folderId')
         .execute()
     );
   }
@@ -321,51 +322,51 @@ export class FolderRepository {
 
   @GenerateSql({ params: [[DummyValue.UUID]] })
   @Chunked()
-  async removeAssetsFromAll(assetIds: string[]): Promise<void> {
-    await this.db.deleteFrom('folder_asset').where('folder_asset.assetId', 'in', assetIds).execute();
+  async removeAlbumsFromAll(albumIds: string[]): Promise<void> {
+    await this.db.deleteFrom('folder_album').where('folder_album.albumId', 'in', albumIds).execute();
   }
 
   @Chunked({ paramIndex: 1 })
-  async removeAssetIds(folderId: string, assetIds: string[]): Promise<void> {
-    if (assetIds.length === 0) {
+  async removeAlbumIds(folderId: string, albumIds: string[]): Promise<void> {
+    if (albumIds.length === 0) {
       return;
     }
 
     await this.db
-      .deleteFrom('folder_asset')
-      .where('folder_asset.folderId', '=', folderId)
-      .where('folder_asset.assetId', 'in', assetIds)
+      .deleteFrom('folder_album')
+      .where('folder_album.folderId', '=', folderId)
+      .where('folder_album.albumId', 'in', albumIds)
       .execute();
   }
 
   /**
-   * Get asset IDs for the given folder ID.
+   * Get album IDs for the given folder ID.
    *
-   * @param folderId Folder ID to get asset IDs for.
-   * @param assetIds Optional list of asset IDs to filter on.
-   * @returns Set of Asset IDs for the given folder ID.
+   * @param folderId Folder ID to get album IDs for.
+   * @param albumIds Optional list of album IDs to filter on.
+   * @returns Set of Album IDs for the given folder ID.
    */
   @GenerateSql({ params: [DummyValue.UUID, [DummyValue.UUID]] })
   @ChunkedSet({ paramIndex: 1 })
-  async getAssetIds(folderId: string, assetIds: string[]): Promise<Set<string>> {
-    if (assetIds.length === 0) {
+  async getAlbumIds(folderId: string, albumIds: string[]): Promise<Set<string>> {
+    if (albumIds.length === 0) {
       return new Set();
     }
 
     return this.db
-      .selectFrom('folder_asset')
+      .selectFrom('folder_album')
       .selectAll()
-      .where('folder_asset.folderId', '=', folderId)
-      .where('folder_asset.assetId', 'in', assetIds)
+      .where('folder_album.folderId', '=', folderId)
+      .where('folder_album.albumId', 'in', albumIds)
       .execute()
-      .then((results) => new Set(results.map(({ assetId }) => assetId)));
+      .then((results) => new Set(results.map(({ albumId }) => albumId)));
   }
 
-  async addAssetIds(folderId: string, assetIds: string[]): Promise<void> {
-    await this.addAssets(this.db, folderId, assetIds);
+  async addAlbumIds(folderId: string, albumIds: string[]): Promise<void> {
+    await this.addAlbums(this.db, folderId, albumIds);
   }
 
-  create(folder: Insertable<FolderTable>, assetIds: string[], folderUsers: FolderUserCreateDto[]) {
+  create(folder: Insertable<FolderTable>, albumIds: string[], folderUsers: FolderUserCreateDto[]) {
     return this.db.transaction().execute(async (tx) => {
       const newFolder = await tx.insertInto('folder').values(folder).returning(['folder.id', 'folder.parentId']).executeTakeFirst();
 
@@ -395,8 +396,8 @@ export class FolderRepository {
           .execute();
       }
 
-      if (assetIds.length > 0) {
-        await this.addAssets(tx, newFolder.id, assetIds);
+      if (albumIds.length > 0) {
+        await this.addAlbums(tx, newFolder.id, albumIds);
       }
 
       if (folderUsers.length > 0) {
@@ -413,9 +414,9 @@ export class FolderRepository {
         .selectAll()
         .where('id', '=', newFolder.id)
         .select(withOwner)
-        .select(withAssets)
+        .select(withAlbums)
         .select(withFolderUsers)
-        .$narrowType<{ assets: NotNull }>()
+        .$narrowType<{ albums: NotNull }>()
         .executeTakeFirstOrThrow();
     });
   }
@@ -490,57 +491,71 @@ export class FolderRepository {
   }
 
   @Chunked({ paramIndex: 2, chunkSize: 30_000 })
-  private async addAssets(db: Kysely<DB>, folderId: string, assetIds: string[]): Promise<void> {
-    if (assetIds.length === 0) {
+  private async addAlbums(db: Kysely<DB>, folderId: string, albumIds: string[]): Promise<void> {
+    if (albumIds.length === 0) {
       return;
     }
 
     await db
-      .insertInto('folder_asset')
-      .values(assetIds.map((assetId) => ({ folderId, assetId })))
+      .insertInto('folder_album')
+      .values(albumIds.map((albumId) => ({ folderId, albumId })))
+      .onConflict((oc) => oc.doNothing())
       .execute();
   }
 
   @Chunked({ chunkSize: 30_000 })
-  async addAssetIdsToFolders(values: { folderId: string; assetId: string }[]): Promise<void> {
+  async addAlbumIdsToFolders(values: { folderId: string; albumId: string }[]): Promise<void> {
     if (values.length === 0) {
       return;
     }
-    await this.db.insertInto('folder_asset').values(values).execute();
+    await this.db.insertInto('folder_album').values(values).onConflict((oc) => oc.doNothing()).execute();
   }
 
   /**
    * Makes sure all thumbnails for folders are updated by:
-   * - Removing thumbnails from folders without assets
-   * - Removing references of thumbnails to assets outside the folder
-   * - Setting a thumbnail when none is set and the folder contains assets
+   * - Setting a thumbnail from the first album's thumbnail when none is set
+   * - Removing references of thumbnails when invalid
    *
    * @returns Amount of updated folder thumbnails or undefined when unknown
    */
   async updateThumbnails(): Promise<number | undefined> {
-    // Subquery for getting a new thumbnail.
-
     const result = await this.db
       .updateTable('folder')
       .set((eb) => ({
-        folderThumbnailAssetId: this.updateThumbnailBuilder(eb)
-          .select('folder_asset.assetId')
-          .orderBy('asset.fileCreatedAt', 'desc')
+        folderThumbnailAssetId: eb
+          .selectFrom('folder_album')
+          .innerJoin('album', (join) =>
+            join.onRef('folder_album.albumId', '=', 'album.id').on('album.deletedAt', 'is', null),
+          )
+          .whereRef('folder_album.folderId', '=', 'folder.id')
+          .select('album.albumThumbnailAssetId')
+          .orderBy('album.createdAt', 'desc')
           .limit(1),
       }))
       .where((eb) =>
         eb.or([
           eb.and([
             eb('folderThumbnailAssetId', 'is', null),
-            eb.exists(this.updateThumbnailBuilder(eb).select(sql`1`.as('1'))), // Has assets
+            eb.exists(
+              eb
+                .selectFrom('folder_album')
+                .innerJoin('album', (join) =>
+                  join.onRef('folder_album.albumId', '=', 'album.id').on('album.deletedAt', 'is', null),
+                )
+                .whereRef('folder_album.folderId', '=', 'folder.id')
+                .where('album.albumThumbnailAssetId', 'is not', null)
+                .select(sql`1`.as('1')),
+            ),
           ]),
           eb.and([
             eb('folderThumbnailAssetId', 'is not', null),
             eb.not(
               eb.exists(
-                this.updateThumbnailBuilder(eb)
-                  .select(sql`1`.as('1'))
-                  .whereRef('folder.folderThumbnailAssetId', '=', 'folder_asset.assetId'), // Has invalid assets
+                eb
+                  .selectFrom('asset')
+                  .whereRef('asset.id', '=', 'folder.folderThumbnailAssetId')
+                  .where('asset.deletedAt', 'is', null)
+                  .select(sql`1`.as('1')),
               ),
             ),
           ]),
@@ -551,44 +566,21 @@ export class FolderRepository {
     return Number(result[0].numUpdatedRows);
   }
 
-  private updateThumbnailBuilder(eb: ExpressionBuilder<DB, 'folder'>) {
-    return eb
-      .selectFrom('folder_asset')
-      .innerJoin('asset', (join) =>
-        join.onRef('folder_asset.assetId', '=', 'asset.id').on('asset.deletedAt', 'is', null),
-      )
-      .whereRef('folder_asset.folderId', '=', 'folder.id');
-  }
-
   /**
-   * Get per-user asset contribution counts for a single folder.
-   * Excludes deleted assets, orders by count desc.
+   * Get per-user album contribution counts for a single folder.
+   * Orders by count desc.
    */
   @GenerateSql({ params: [DummyValue.UUID] })
   getContributorCounts(id: string) {
     return this.db
-      .selectFrom('folder_asset')
-      .innerJoin('asset', 'asset.id', 'assetId')
-      .where('asset.deletedAt', 'is', sql.lit(null))
-      .where('folder_asset.folderId', '=', id)
-      .select('asset.ownerId as userId')
-      .select((eb) => eb.fn.countAll<number>().as('assetCount'))
-      .groupBy('asset.ownerId')
-      .orderBy('assetCount', 'desc')
-      .execute();
-  }
-
-  @GenerateSql({ params: [{ sourceAssetId: DummyValue.UUID, targetAssetId: DummyValue.UUID }] })
-  async copyFolders({ sourceAssetId, targetAssetId }: { sourceAssetId: string; targetAssetId: string }) {
-    return this.db
-      .insertInto('folder_asset')
-      .expression((eb) =>
-        eb
-          .selectFrom('folder_asset')
-          .select((eb) => ['folder_asset.folderId', eb.val(targetAssetId).as('assetId')])
-          .where('folder_asset.assetId', '=', sourceAssetId),
-      )
-      .onConflict((oc) => oc.doNothing())
+      .selectFrom('folder_album')
+      .innerJoin('album', 'album.id', 'albumId')
+      .where('album.deletedAt', 'is', sql.lit(null))
+      .where('folder_album.folderId', '=', id)
+      .select('album.ownerId as userId')
+      .select((eb) => eb.fn.countAll<number>().as('albumCount'))
+      .groupBy('album.ownerId')
+      .orderBy('albumCount', 'desc')
       .execute();
   }
 }

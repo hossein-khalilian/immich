@@ -7,13 +7,14 @@
   type Props = {
     onClose: (album?: { id: string }) => void;
     assetIds?: string[];
+    folderId?: string;
   };
 
-  let { onClose, assetIds }: Props = $props();
+  let { onClose, assetIds, folderId }: Props = $props();
   let albumName = $state('');
 
   const onSubmit = async () => {
-    const newAlbum = await createAlbum(albumName.trim() || undefined, assetIds);
+    const newAlbum = await createAlbum(albumName.trim() || undefined, assetIds, folderId);
     if (newAlbum) {
       onClose(newAlbum);
     }

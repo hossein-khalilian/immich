@@ -2,9 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, IsString, ValidateNested } from 'class-validator';
 import _ from 'lodash';
-import { FolderUser, AuthSharedLink, User } from 'src/database';
+import { FolderUser, AuthSharedLink, User, FolderAlbum } from 'src/database';
 import { BulkIdErrorReason } from 'src/dtos/asset-ids.response.dto';
-import { AssetResponseDto, MapAsset, mapAsset } from 'src/dtos/asset-response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { UserResponseDto, mapUser } from 'src/dtos/user.dto';
 import { AlbumUserRole, AssetOrder } from 'src/enum';
@@ -12,7 +11,7 @@ import { Optional, ValidateBoolean, ValidateEnum, ValidateUUID } from 'src/valid
 
 export class FolderInfoDto {
   @ValidateBoolean({ optional: true })
-  withoutAssets?: boolean;
+  withoutAlbums?: boolean;
 }
 
 export class FolderUserAddDto {
@@ -54,21 +53,21 @@ export class CreateFolderDto {
   folderUsers?: FolderUserCreateDto[];
 
   @ValidateUUID({ optional: true, each: true })
-  assetIds?: string[];
+  albumIds?: string[];
 
   @ValidateUUID({ optional: true })
   parentId?: string;
 }
 
-export class FoldersAddAssetsDto {
+export class FoldersAddAlbumsDto {
   @ValidateUUID({ each: true })
   folderIds!: string[];
 
   @ValidateUUID({ each: true })
-  assetIds!: string[];
+  albumIds!: string[];
 }
 
-export class FoldersAddAssetsResponseDto {
+export class FoldersAddAlbumsResponseDto {
   success!: boolean;
   @ValidateEnum({ enum: BulkIdErrorReason, name: 'BulkIdErrorReason', optional: true })
   error?: BulkIdErrorReason;
@@ -106,12 +105,12 @@ export class GetFoldersDto {
   shared?: boolean;
 
   /**
-   * Only returns folders that contain the asset
+   * Only returns folders that contain the album
    * Ignores the shared parameter
    * undefined: get all folders
    */
   @ValidateUUID({ optional: true })
-  assetId?: string;
+  albumId?: string;
 
   /**
    * Filter by parent folder ID
@@ -145,12 +144,20 @@ export class FolderUserResponseDto {
   role!: AlbumUserRole;
 }
 
+export class FolderAlbumResponseDto {
+  id!: string;
+  albumName!: string;
+  albumThumbnailAssetId!: string | null;
+  @ApiProperty({ type: 'integer' })
+  assetCount!: number;
+}
+
 export class ContributorCountResponseDto {
   @ApiProperty()
   userId!: string;
 
   @ApiProperty({ type: 'integer' })
-  assetCount!: number;
+  albumCount!: number;
 }
 
 export class FolderResponseDto {
@@ -164,11 +171,11 @@ export class FolderResponseDto {
   shared!: boolean;
   folderUsers!: FolderUserResponseDto[];
   hasSharedLink!: boolean;
-  assets!: AssetResponseDto[];
+  albums!: FolderAlbumResponseDto[];
   owner!: UserResponseDto;
   @ApiProperty({ type: 'integer' })
-  assetCount!: number;
-  lastModifiedAssetTimestamp?: Date;
+  albumCount!: number;
+  lastModifiedAlbumTimestamp?: Date;
   startDate?: Date;
   endDate?: Date;
   isActivityEnabled!: boolean;
@@ -186,7 +193,7 @@ export class FolderResponseDto {
 
 export type MapFolderDto = {
   folderUsers?: FolderUser[];
-  assets?: MapAsset[];
+  albums?: FolderAlbum[];
   sharedLinks?: AuthSharedLink[];
   folderName: string;
   description: string;
@@ -202,7 +209,14 @@ export type MapFolderDto = {
   subfolderCount?: number;
 };
 
-export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: AuthDto): FolderResponseDto => {
+export const mapFolderAlbum = (album: FolderAlbum): FolderAlbumResponseDto => ({
+  id: album.id,
+  albumName: album.albumName,
+  albumThumbnailAssetId: album.albumThumbnailAssetId,
+  assetCount: album.assetCount ?? 0,
+});
+
+export const mapFolder = (entity: MapFolderDto, withAlbums: boolean, auth?: AuthDto): FolderResponseDto => {
   const folderUsers: FolderUserResponseDto[] = [];
 
   if (entity.folderUsers) {
@@ -217,17 +231,10 @@ export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: Auth
 
   const folderUsersSorted = _.orderBy(folderUsers, ['role', 'user.name']);
 
-  const assets = entity.assets || [];
+  const albums = entity.albums || [];
 
   const hasSharedLink = !!entity.sharedLinks && entity.sharedLinks.length > 0;
   const hasSharedUser = folderUsers.length > 0;
-
-  let startDate = assets.at(0)?.localDateTime;
-  let endDate = assets.at(-1)?.localDateTime;
-  // Swap dates if start date is greater than end date.
-  if (startDate && endDate && startDate > endDate) {
-    [startDate, endDate] = [endDate, startDate];
-  }
 
   return {
     folderName: entity.folderName,
@@ -241,10 +248,8 @@ export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: Auth
     folderUsers: folderUsersSorted,
     shared: hasSharedUser || hasSharedLink,
     hasSharedLink,
-    startDate,
-    endDate,
-    assets: (withAssets ? assets : []).map((asset) => mapAsset(asset, { auth })),
-    assetCount: entity.assets?.length || 0,
+    albums: (withAlbums ? albums : []).map(mapFolderAlbum),
+    albumCount: entity.albums?.length || 0,
     isActivityEnabled: entity.isActivityEnabled,
     order: entity.order,
     parentId: entity.parentId ?? null,
@@ -252,5 +257,5 @@ export const mapFolder = (entity: MapFolderDto, withAssets: boolean, auth?: Auth
   };
 };
 
-export const mapFolderWithAssets = (entity: MapFolderDto) => mapFolder(entity, true);
-export const mapFolderWithoutAssets = (entity: MapFolderDto) => mapFolder(entity, false);
+export const mapFolderWithAlbums = (entity: MapFolderDto) => mapFolder(entity, true);
+export const mapFolderWithoutAlbums = (entity: MapFolderDto) => mapFolder(entity, false);

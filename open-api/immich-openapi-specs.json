@@ -4933,10 +4933,10 @@
         "operationId": "getAllFolders",
         "parameters": [
           {
-            "name": "assetId",
+            "name": "albumId",
             "required": false,
             "in": "query",
-            "description": "Only returns folders that contain the asset\nIgnores the shared parameter\nundefined: get all folders",
+            "description": "Only returns folders that contain the album\nIgnores the shared parameter\nundefined: get all folders",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -5010,7 +5010,7 @@
         "x-immich-state": "Stable"
       },
       "post": {
-        "description": "Create a new folder. The folder can also be created with initial users and assets.",
+        "description": "Create a new folder. The folder can also be created with initial users and albums.",
         "operationId": "createFolder",
         "parameters": [],
         "requestBody": {
@@ -5068,10 +5068,10 @@
         "x-immich-state": "Stable"
       }
     },
-    "/folders/assets": {
+    "/folders/albums": {
       "put": {
-        "description": "Send a list of asset IDs and folder IDs to add each asset to each folder.",
-        "operationId": "addAssetsToFolders",
+        "description": "Send a list of album IDs and folder IDs to add each album to each folder.",
+        "operationId": "addAlbumsToFolders",
         "parameters": [
           {
             "name": "key",
@@ -5094,7 +5094,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FoldersAddAssetsDto"
+                "$ref": "#/components/schemas/FoldersAddAlbumsDto"
               }
             }
           },
@@ -5105,7 +5105,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FoldersAddAssetsResponseDto"
+                  "$ref": "#/components/schemas/FoldersAddAlbumsResponseDto"
                 }
               }
             },
@@ -5123,7 +5123,7 @@
             "api_key": []
           }
         ],
-        "summary": "Add assets to folders",
+        "summary": "Add albums to folders",
         "tags": [
           "Folders"
         ],
@@ -5141,7 +5141,7 @@
             "state": "Stable"
           }
         ],
-        "x-immich-permission": "folderAsset.create",
+        "x-immich-permission": "folder.update",
         "x-immich-state": "Stable"
       }
     },
@@ -5197,7 +5197,7 @@
     },
     "/folders/{id}": {
       "delete": {
-        "description": "Delete a specific folder by its ID. Note the folder is initially trashed and then immediately scheduled for deletion, but relies on a background job to complete the process.",
+        "description": "Delete a specific folder by its ID. Note: This only deletes the folder structure, not the albums or photos within.",
         "operationId": "deleteFolder",
         "parameters": [
           {
@@ -5277,7 +5277,7 @@
             }
           },
           {
-            "name": "withoutAssets",
+            "name": "withoutAlbums",
             "required": false,
             "in": "query",
             "schema": {
@@ -5330,7 +5330,7 @@
         "x-immich-state": "Stable"
       },
       "patch": {
-        "description": "Update the information of a specific folder by its ID. This endpoint can be used to update the folder name, description, sort order, etc. However, it is not used to add or remove assets or users from the folder.",
+        "description": "Update the information of a specific folder by its ID. This endpoint can be used to update the folder name, description, sort order, etc. However, it is not used to add or remove albums or users from the folder.",
         "operationId": "updateFolderInfo",
         "parameters": [
           {
@@ -5377,6 +5377,166 @@
           }
         ],
         "summary": "Update a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.update",
+        "x-immich-state": "Stable"
+      }
+    },
+    "/folders/{id}/albums": {
+      "delete": {
+        "description": "Remove multiple albums from a specific folder by its ID.",
+        "operationId": "removeAlbumFromFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BulkIdResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Remove albums from a folder",
+        "tags": [
+          "Folders"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v1",
+            "state": "Added"
+          },
+          {
+            "version": "v1",
+            "state": "Beta"
+          },
+          {
+            "version": "v2",
+            "state": "Stable"
+          }
+        ],
+        "x-immich-permission": "folder.update",
+        "x-immich-state": "Stable"
+      },
+      "put": {
+        "description": "Add multiple albums to a specific folder by its ID.",
+        "operationId": "addAlbumsToFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BulkIdResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Add albums to a folder",
         "tags": [
           "Folders"
         ],
@@ -5458,166 +5618,6 @@
           }
         ],
         "x-immich-permission": "folder.read",
-        "x-immich-state": "Stable"
-      }
-    },
-    "/folders/{id}/assets": {
-      "delete": {
-        "description": "Remove multiple assets from a specific folder by its ID.",
-        "operationId": "removeAssetFromFolder",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BulkIdsDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/BulkIdResponseDto"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "cookie": []
-          },
-          {
-            "api_key": []
-          }
-        ],
-        "summary": "Remove assets from a folder",
-        "tags": [
-          "Folders"
-        ],
-        "x-immich-history": [
-          {
-            "version": "v1",
-            "state": "Added"
-          },
-          {
-            "version": "v1",
-            "state": "Beta"
-          },
-          {
-            "version": "v2",
-            "state": "Stable"
-          }
-        ],
-        "x-immich-permission": "folderAsset.delete",
-        "x-immich-state": "Stable"
-      },
-      "put": {
-        "description": "Add multiple assets to a specific folder by its ID.",
-        "operationId": "addAssetsToFolder",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "key",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "slug",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BulkIdsDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/BulkIdResponseDto"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "cookie": []
-          },
-          {
-            "api_key": []
-          }
-        ],
-        "summary": "Add assets to a folder",
-        "tags": [
-          "Folders"
-        ],
-        "x-immich-history": [
-          {
-            "version": "v1",
-            "state": "Added"
-          },
-          {
-            "version": "v1",
-            "state": "Beta"
-          },
-          {
-            "version": "v2",
-            "state": "Stable"
-          }
-        ],
-        "x-immich-permission": "folderAsset.create",
         "x-immich-state": "Stable"
       }
     },
@@ -17183,6 +17183,10 @@
           },
           "description": {
             "type": "string"
+          },
+          "folderId": {
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
@@ -17192,7 +17196,7 @@
       },
       "CreateFolderDto": {
         "properties": {
-          "assetIds": {
+          "albumIds": {
             "items": {
               "format": "uuid",
               "type": "string"
@@ -17625,14 +17629,38 @@
         ],
         "type": "object"
       },
-      "FolderResponseDto": {
+      "FolderAlbumResponseDto": {
         "properties": {
+          "albumName": {
+            "type": "string"
+          },
+          "albumThumbnailAssetId": {
+            "nullable": true,
+            "type": "string"
+          },
           "assetCount": {
             "type": "integer"
           },
-          "assets": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "albumName",
+          "albumThumbnailAssetId",
+          "assetCount",
+          "id"
+        ],
+        "type": "object"
+      },
+      "FolderResponseDto": {
+        "properties": {
+          "albumCount": {
+            "type": "integer"
+          },
+          "albums": {
             "items": {
-              "$ref": "#/components/schemas/AssetResponseDto"
+              "$ref": "#/components/schemas/FolderAlbumResponseDto"
             },
             "type": "array"
           },
@@ -17675,7 +17703,7 @@
           "isActivityEnabled": {
             "type": "boolean"
           },
-          "lastModifiedAssetTimestamp": {
+          "lastModifiedAlbumTimestamp": {
             "format": "date-time",
             "type": "string"
           },
@@ -17712,8 +17740,8 @@
           }
         },
         "required": [
-          "assetCount",
-          "assets",
+          "albumCount",
+          "albums",
           "createdAt",
           "description",
           "folderName",
@@ -17807,9 +17835,9 @@
         ],
         "type": "object"
       },
-      "FoldersAddAssetsDto": {
+      "FoldersAddAlbumsDto": {
         "properties": {
-          "assetIds": {
+          "albumIds": {
             "items": {
               "format": "uuid",
               "type": "string"
@@ -17825,12 +17853,12 @@
           }
         },
         "required": [
-          "assetIds",
+          "albumIds",
           "folderIds"
         ],
         "type": "object"
       },
-      "FoldersAddAssetsResponseDto": {
+      "FoldersAddAlbumsResponseDto": {
         "properties": {
           "error": {
             "allOf": [
@@ -19160,8 +19188,8 @@
           "folder.statistics",
           "folder.share",
           "folder.download",
-          "folderAsset.create",
-          "folderAsset.delete",
+          "folderAlbum.create",
+          "folderAlbum.delete",
           "folderUser.create",
           "folderUser.update",
           "folderUser.delete",

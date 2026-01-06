@@ -203,9 +203,16 @@ export type Album = Selectable<AlbumTable> & {
   assets: MapAsset[];
 };
 
+export type FolderAlbum = {
+  id: string;
+  albumName: string;
+  albumThumbnailAssetId: string | null;
+  assetCount: number | null;
+};
+
 export type Folder = Selectable<FolderTable> & {
   owner: User;
-  assets: MapAsset[];
+  albums: FolderAlbum[];
 };
 
 export type AuthSession = {

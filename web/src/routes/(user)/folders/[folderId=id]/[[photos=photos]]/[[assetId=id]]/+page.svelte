@@ -291,7 +291,7 @@
   let folderId = $derived(folder.id);
   let folderUsers = $derived(folder.folderUsers || []);
   let subfolders = $derived(data.subfolders || []);
-  let albums = $derived(data.albums || []);
+  let folderAlbums = $derived(folder.albums || []);
 
   const containsEditors = $derived(folder?.shared && folderUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const folderUsersList = $derived(
@@ -445,7 +445,7 @@
           icon={mdiImagePlusOutline}
           text={$t('create_album')}
           onClick={async () => {
-            const result = await modalManager.show(AlbumCreateModal, {});
+            const result = await modalManager.show(AlbumCreateModal, { folderId: folder.id });
             if (result) {
               await invalidateAll();
             }
@@ -455,37 +455,53 @@
     </div>
   {/snippet}
 
-  <!-- Subfolders -->
-  <Folders
-    ownedFolders={subfolders}
-    sharedFolders={[]}
-    userSettings={$folderViewSettings}
-    allowEdit
-    searchQuery=""
-    folderGroupIds={[]}
-    onlyRootFolders={false}
-  >
-    {#snippet empty()}
-      {#if albums.length === 0}
-        <EmptyPlaceholder
-          text={$t('empty_folder')}
-          class="mt-10 mx-auto"
-        />
-      {/if}
-    {/snippet}
-  </Folders>
+  <!-- Content -->
+  {#if subfolders.length === 0 && folderAlbums.length === 0}
+    <EmptyPlaceholder
+      text={$t('empty_folder')}
+      class="mt-10 mx-auto"
+    />
+  {:else}
+    <!-- Subfolders Section -->
+    {#if subfolders.length > 0}
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-4">
+          <Icon icon={mdiFolderPlusOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
+          <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            {$t('folders')} ({subfolders.length})
+          </h2>
+        </div>
+        <Folders
+          ownedFolders={subfolders}
+          sharedFolders={[]}
+          userSettings={$folderViewSettings}
+          allowEdit
+          searchQuery=""
+          folderGroupIds={[]}
+          onlyRootFolders={false}
+        >
+          {#snippet empty()}
+            <!-- Empty handled above -->
+          {/snippet}
+        </Folders>
+      </div>
+    {/if}
 
-  <!-- Albums -->
-  {#if albums.length > 0}
-    <div class="mt-8">
-      <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase">
-        {$t('albums')}
-      </h2>
-      <AlbumCardGroup
-        albums={albums}
-        showDateRange={false}
-        showItemCount={true}
-      />
-    </div>
+    <!-- Albums Section -->
+    {#if folderAlbums.length > 0}
+      <div class="mt-6">
+        <div class="flex items-center gap-2 mb-4">
+          <Icon icon={mdiImageOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
+          <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            {$t('albums')} ({folderAlbums.length})
+          </h2>
+        </div>
+        <AlbumCardGroup
+          albums={folderAlbums}
+          showDateRange={false}
+          showItemCount={true}
+        />
+      </div>
+    {/if}
   {/if}
 </UserPageLayout>

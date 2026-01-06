@@ -5,8 +5,8 @@ import {
   AddFolderUsersDto,
   FolderInfoDto,
   FolderResponseDto,
-  FoldersAddAssetsDto,
-  FoldersAddAssetsResponseDto,
+  FoldersAddAlbumsDto,
+  FoldersAddAlbumsResponseDto,
   FolderStatisticsResponseDto,
   CreateFolderDto,
   GetFoldersDto,
@@ -40,7 +40,7 @@ export class FolderController {
   @Authenticated({ permission: Permission.FolderCreate })
   @Endpoint({
     summary: 'Create a folder',
-    description: 'Create a new folder. The folder can also be created with initial users and assets.',
+    description: 'Create a new folder. The folder can also be created with initial users and albums.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   createFolder(@Auth() auth: AuthDto, @Body() dto: CreateFolderDto): Promise<FolderResponseDto> {
@@ -100,7 +100,7 @@ export class FolderController {
   @Endpoint({
     summary: 'Update a folder',
     description:
-      'Update the information of a specific folder by its ID. This endpoint can be used to update the folder name, description, sort order, etc. However, it is not used to add or remove assets or users from the folder.',
+      'Update the information of a specific folder by its ID. This endpoint can be used to update the folder name, description, sort order, etc. However, it is not used to add or remove albums or users from the folder.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   updateFolderInfo(
@@ -117,52 +117,52 @@ export class FolderController {
   @Endpoint({
     summary: 'Delete a folder',
     description:
-      'Delete a specific folder by its ID. Note the folder is initially trashed and then immediately scheduled for deletion, but relies on a background job to complete the process.',
+      'Delete a specific folder by its ID. Note: This only deletes the folder structure, not the albums or photos within.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   deleteFolder(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto) {
     return this.service.delete(auth, id);
   }
 
-  @Put(':id/assets')
-  @Authenticated({ permission: Permission.FolderAssetCreate, sharedLink: true })
+  @Put(':id/albums')
+  @Authenticated({ permission: Permission.FolderUpdate, sharedLink: true })
   @Endpoint({
-    summary: 'Add assets to a folder',
-    description: 'Add multiple assets to a specific folder by its ID.',
+    summary: 'Add albums to a folder',
+    description: 'Add multiple albums to a specific folder by its ID.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
-  addAssetsToFolder(
+  addAlbumsToFolder(
     @Auth() auth: AuthDto,
     @Param() { id }: UUIDParamDto,
     @Body() dto: BulkIdsDto,
   ): Promise<BulkIdResponseDto[]> {
-    return this.service.addAssets(auth, id, dto);
+    return this.service.addAlbums(auth, id, dto);
   }
 
-  @Put('assets')
-  @Authenticated({ permission: Permission.FolderAssetCreate, sharedLink: true })
+  @Put('albums')
+  @Authenticated({ permission: Permission.FolderUpdate, sharedLink: true })
   @Endpoint({
-    summary: 'Add assets to folders',
-    description: 'Send a list of asset IDs and folder IDs to add each asset to each folder.',
+    summary: 'Add albums to folders',
+    description: 'Send a list of album IDs and folder IDs to add each album to each folder.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
-  addAssetsToFolders(@Auth() auth: AuthDto, @Body() dto: FoldersAddAssetsDto): Promise<FoldersAddAssetsResponseDto> {
-    return this.service.addAssetsToFolders(auth, dto);
+  addAlbumsToFolders(@Auth() auth: AuthDto, @Body() dto: FoldersAddAlbumsDto): Promise<FoldersAddAlbumsResponseDto> {
+    return this.service.addAlbumsToFolders(auth, dto);
   }
 
-  @Delete(':id/assets')
-  @Authenticated({ permission: Permission.FolderAssetDelete })
+  @Delete(':id/albums')
+  @Authenticated({ permission: Permission.FolderUpdate })
   @Endpoint({
-    summary: 'Remove assets from a folder',
-    description: 'Remove multiple assets from a specific folder by its ID.',
+    summary: 'Remove albums from a folder',
+    description: 'Remove multiple albums from a specific folder by its ID.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
-  removeAssetFromFolder(
+  removeAlbumFromFolder(
     @Auth() auth: AuthDto,
     @Body() dto: BulkIdsDto,
     @Param() { id }: UUIDParamDto,
   ): Promise<BulkIdResponseDto[]> {
-    return this.service.removeAssets(auth, id, dto);
+    return this.service.removeAlbums(auth, id, dto);
   }
 
   @Put(':id/users')
