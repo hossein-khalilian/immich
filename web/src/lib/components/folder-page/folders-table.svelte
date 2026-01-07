@@ -33,6 +33,9 @@
       {#each sortOptionsMetadata as option, index (index)}
         <FolderTableHeader {option} />
       {/each}
+      {#if onShowContextMenu}
+        <th class="text-sm font-medium w-12"></th>
+      {/if}
     </tr>
   </thead>
   {#if folderGroupOption === FolderGroupBy.None}

@@ -7,8 +7,8 @@
   import { user } from '$lib/stores/user.store';
   import type { ContextMenuPosition } from '$lib/utils/context-menu';
   import type { AlbumResponseDto } from '@immich/sdk';
-  import { Icon } from '@immich/ui';
-  import { mdiShareVariantOutline } from '@mdi/js';
+  import { Icon, IconButton } from '@immich/ui';
+  import { mdiDotsVertical, mdiShareVariantOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -29,6 +29,11 @@
   const oncontextmenu = (event: MouseEvent) => {
     event.preventDefault();
     showContextMenu({ x: event.x, y: event.y });
+  };
+
+  const handleMenuClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    showContextMenu({ x: event.clientX, y: event.clientY });
   };
 </script>
 
@@ -73,4 +78,17 @@
       -
     {/if}
   </td>
+  {#if onShowContextMenu}
+    <td class="flex items-center justify-center w-12">
+      <IconButton
+        color="secondary"
+        aria-label={$t('show_album_options')}
+        icon={mdiDotsVertical}
+        shape="round"
+        variant="ghost"
+        size="small"
+        onclick={handleMenuClick}
+      />
+    </td>
+  {/if}
 </tr>

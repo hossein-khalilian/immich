@@ -32,6 +32,9 @@
       {#each sortOptionsMetadata as option, index (index)}
         <AlbumTableHeader {option} />
       {/each}
+      {#if onShowContextMenu}
+        <th class="text-sm font-medium w-12"></th>
+      {/if}
     </tr>
   </thead>
   {#if albumGroupOption === AlbumGroupBy.None}
