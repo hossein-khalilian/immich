@@ -26,7 +26,7 @@
   import { normalizeSearchString } from '$lib/utils/string-utils';
   import { addUsersToAlbum, type AlbumResponseDto, type AlbumUserAddDto } from '@immich/sdk';
   import { modalManager } from '@immich/ui';
-  import { mdiDeleteOutline, mdiDownload, mdiFolderMove, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import { mdiDeleteOutline, mdiDownload, mdiFolderMove, mdiFolderRemoveOutline, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
   import FolderMoveModal from '$lib/modals/FolderMoveModal.svelte';
   import { addAlbumsToFolder, removeAlbumsFromFolder, getAllFolders } from '$lib/utils/folder-api';
   import { invalidateAll } from '$app/navigation';
@@ -46,6 +46,7 @@
     showOwner?: boolean;
     albumGroupIds?: string[];
     empty?: Snippet;
+    currentFolderId?: string; // Current folder ID when viewing a folder
   }
 
   let {
@@ -57,6 +58,7 @@
     showOwner = false,
     albumGroupIds = $bindable([]),
     empty,
+    currentFolderId,
   }: Props = $props();
 
   interface AlbumGroupOption {
@@ -252,7 +254,7 @@
     isOpen = false;
   };
 
-  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete' | 'move') => {
+  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete' | 'move' | 'removeFromFolder') => {
     closeAlbumContextMenu();
 
     if (!selectedAlbum) {
@@ -326,6 +328,20 @@
           } catch (error) {
             handleError(error, $t('errors.unable_to_update_album_info'));
           }
+        }
+        break;
+      }
+
+      case 'removeFromFolder': {
+        if (!currentFolderId) {
+          return;
+        }
+        try {
+          await removeAlbumsFromFolder(currentFolderId, [selectedAlbum.id]);
+            toastManager.success($t('removed_from_album'));
+            await invalidateAll();
+        } catch (error) {
+          handleError(error, $t('errors.unable_to_update_album_info'));
         }
         break;
       }
@@ -416,6 +432,9 @@
     <MenuOption icon={mdiRenameOutline} text={$t('edit_album')} onClick={() => handleSelect('edit')} />
     <MenuOption icon={mdiShareVariantOutline} text={$t('share')} onClick={() => handleSelect('share')} />
     <MenuOption icon={mdiFolderMove} text={$t('move')} onClick={() => handleSelect('move')} />
+  {/if}
+  {#if currentFolderId}
+    <MenuOption icon={mdiFolderRemoveOutline} text="Remove from folder" onClick={() => handleSelect('removeFromFolder')} />
   {/if}
   <MenuOption icon={mdiDownload} text={$t('download')} onClick={() => handleSelect('download')} />
   {#if showFullContextMenu}

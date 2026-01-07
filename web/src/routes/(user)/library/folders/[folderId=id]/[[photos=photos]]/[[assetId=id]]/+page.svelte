@@ -439,7 +439,7 @@
         icon={mdiArrowLeft}
         onclick={() => goto(backUrl)}
       />
-      <LibraryControls {folderGroups} {albumGroups} bind:searchQuery />
+      <LibraryControls {folderGroups} {albumGroups} bind:searchQuery currentFolderId={folder.id} />
     </div>
   {/snippet}
 
@@ -509,6 +509,7 @@
           allowEdit
           {searchQuery}
           bind:albumGroupIds={albumGroups}
+          currentFolderId={folder.id}
         >
           {#snippet empty()}
             <!-- Empty handled above -->

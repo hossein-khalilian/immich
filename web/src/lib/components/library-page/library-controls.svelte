@@ -66,9 +66,10 @@
     folderGroups: string[];
     albumGroups: string[];
     searchQuery: string;
+    currentFolderId?: string; // Current folder ID when viewing a folder
   }
 
-  let { folderGroups, albumGroups, searchQuery = $bindable() }: Props = $props();
+  let { folderGroups, albumGroups, searchQuery = $bindable(), currentFolderId }: Props = $props();
 
   const flipOrdering = (ordering: string) => {
     return ordering === SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc;
@@ -295,7 +296,7 @@
     icon={mdiFolderPlusOutline}
     text={$t('create_folder')}
     onClick={async () => {
-      const result = await modalManager.show(FolderCreateModal, {});
+      const result = await modalManager.show(FolderCreateModal, { parentId: currentFolderId });
       if (result) {
         await invalidateAll();
       }
@@ -305,7 +306,7 @@
     icon={mdiImagePlusOutline}
     text={$t('create_album')}
     onClick={async () => {
-      const result = await modalManager.show(AlbumCreateModal, {});
+      const result = await modalManager.show(AlbumCreateModal, { folderId: currentFolderId });
       if (result) {
         await invalidateAll();
       }
