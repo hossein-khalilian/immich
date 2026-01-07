@@ -38,10 +38,6 @@
 
   let iconRotation = $derived(isCollapsed ? 'rotate-0' : 'rotate-90');
 
-  const oncontextmenu = (event: MouseEvent, album: AlbumResponseDto) => {
-    event.preventDefault();
-    showContextMenu({ x: event.x, y: event.y }, album);
-  };
 </script>
 
 {#if group}
@@ -64,20 +60,21 @@
   {#if !isCollapsed}
     <div class="grid grid-auto-fill-56 gap-y-4" transition:slide={{ duration: 300 }}>
       {#each albums as album, index (album.id)}
-        <a
-          href={resolve(`${AppRoute.ALBUMS}/${album.id}`)}
-          animate:flip={{ duration: 400 }}
-          oncontextmenu={(event) => oncontextmenu(event, album)}
-        >
-          <AlbumCard
-            {album}
-            {showOwner}
-            {showDateRange}
-            {showItemCount}
-            preload={index < 20}
-            onShowContextMenu={onShowContextMenu ? (position) => showContextMenu(position, album) : undefined}
-          />
-        </a>
+        <div class="relative" animate:flip={{ duration: 400 }}>
+          <a
+            href={resolve(`${AppRoute.ALBUMS}/${album.id}`)}
+            class="block"
+          >
+            <AlbumCard
+              {album}
+              {showOwner}
+              {showDateRange}
+              {showItemCount}
+              preload={index < 20}
+              onShowContextMenu={onShowContextMenu ? (position) => showContextMenu(position, album) : undefined}
+            />
+          </a>
+        </div>
       {/each}
     </div>
   {/if}

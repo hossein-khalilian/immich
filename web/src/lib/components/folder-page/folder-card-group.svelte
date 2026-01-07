@@ -39,10 +39,6 @@
 
   let iconRotation = $derived(isCollapsed ? 'rotate-0' : 'rotate-90');
 
-  const oncontextmenu = (event: MouseEvent, folder: FolderResponseDto) => {
-    event.preventDefault();
-    showContextMenu({ x: event.x, y: event.y }, folder);
-  };
 </script>
 
 {#if group}
@@ -65,20 +61,21 @@
   {#if !isCollapsed}
     <div class="grid grid-auto-fill-56 gap-y-4" transition:slide={{ duration: 300 }}>
       {#each folders as folder, index (folder.id)}
-        <a
-          href={resolve(`${AppRoute.FOLDERS}/${folder.id}`)}
-          animate:flip={{ duration: 400 }}
-          oncontextmenu={(event) => oncontextmenu(event, folder)}
-        >
-          <FolderCard
-            {folder}
-            {showOwner}
-            {showDateRange}
-            {showItemCount}
-            preload={index < 20}
-            onShowContextMenu={onShowContextMenu ? (position) => showContextMenu(position, folder) : undefined}
-          />
-        </a>
+        <div class="relative" animate:flip={{ duration: 400 }}>
+          <a
+            href={resolve(`${AppRoute.FOLDERS}/${folder.id}`)}
+            class="block"
+          >
+            <FolderCard
+              {folder}
+              {showOwner}
+              {showDateRange}
+              {showItemCount}
+              preload={index < 20}
+              onShowContextMenu={onShowContextMenu ? (position) => showContextMenu(position, folder) : undefined}
+            />
+          </a>
+        </div>
       {/each}
     </div>
   {/if}

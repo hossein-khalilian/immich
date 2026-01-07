@@ -36,11 +36,14 @@
 <div
   class="group relative rounded-2xl border border-transparent p-5 hover:bg-gray-100 hover:border-gray-200 dark:hover:border-gray-800 dark:hover:bg-gray-900"
   data-testid="album-card"
+  role="button"
+  tabindex="0"
+  oncontextmenu={onShowContextMenu ? showAlbumContextMenu : undefined}
 >
   {#if onShowContextMenu}
     <div
       id="icon-{album.id}"
-      class="absolute end-6 top-6 opacity-0 group-hover:opacity-100 focus-within:opacity-100"
+      class="absolute end-6 top-6 opacity-0 group-hover:opacity-100 focus-within:opacity-100 z-10 transition-opacity duration-200"
       data-testid="context-button-parent"
     >
       <IconButton
@@ -55,6 +58,7 @@
       />
     </div>
   {/if}
+  
 
   <div class="relative">
     <AlbumCover {album} {preload} class="transition-all duration-300 hover:shadow-lg" />
