@@ -25,7 +25,7 @@
 
 {#each albums as album (album.id)}
   <a
-    href={'/albums/' + album.id}
+    href={'/library/albums/' + album.id}
     title={album.albumName}
     class="flex w-full place-items-center justify-between gap-4 rounded-e-full py-3 transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-subtle hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary ps-10 group-hover:sm:px-10 md:px-10"
   >

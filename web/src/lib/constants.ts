@@ -30,7 +30,7 @@ export enum AppRoute {
   ADMIN_QUEUES = '/admin/queues',
   ADMIN_REPAIR = '/admin/repair',
 
-  ALBUMS = '/albums',
+  ALBUMS = '/library/albums',
   LIBRARIES = '/libraries',
   ARCHIVE = '/archive',
   FAVORITES = '/favorites',
@@ -61,7 +61,7 @@ export enum AppRoute {
   GEOLOCATION = '/utilities/geolocation',
   WORKFLOWS = '/utilities/workflows',
 
-  FOLDERS = '/folders',
+  FOLDERS = '/library/folders',
   TAGS = '/tags',
   LOCKED = '/locked',
 

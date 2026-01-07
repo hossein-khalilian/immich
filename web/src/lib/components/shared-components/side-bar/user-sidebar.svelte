@@ -97,7 +97,7 @@
 
   <SideBarLink
     title={$t('library')}
-    href={resolve('/(user)/folders')}
+    href={resolve('/(user)/library')}
     icon={mdiFolderOutline}
     flippedLogo
     bind:dropdownOpen={$recentFoldersDropdown}
