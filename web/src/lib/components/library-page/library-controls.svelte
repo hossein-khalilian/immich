@@ -105,6 +105,30 @@
     }
   };
 
+  const handleChangeUnifiedGroupBy = ({ id, defaultOrder }: FolderGroupOptionMetadata) => {
+    // Update both folder and album group settings together
+    const newOrder = $folderViewSettings.groupBy === id
+      ? flipOrdering($folderViewSettings.groupOrder)
+      : defaultOrder;
+    
+    $folderViewSettings.groupBy = id;
+    $folderViewSettings.groupOrder = newOrder;
+    
+    // Map folder group to album group (they have the same enum values)
+    $albumViewSettings.groupBy = id as AlbumGroupBy;
+    $albumViewSettings.groupOrder = newOrder;
+  };
+
+  const handleExpandAllGroups = () => {
+    expandAllFolderGroups();
+    expandAllAlbumGroups();
+  };
+
+  const handleCollapseAllGroups = () => {
+    collapseAllFolderGroups(folderGroups);
+    collapseAllAlbumGroups(albumGroups);
+  };
+
   const handleChangeSortBy = ({ id, defaultOrder }: FolderSortOptionMetadata) => {
     if ($folderViewSettings.sortBy === id) {
       $folderViewSettings.sortOrder = flipOrdering($folderViewSettings.sortOrder);
@@ -114,9 +138,30 @@
     }
   };
 
+  const handleChangeUnifiedSortBy = ({ id, defaultOrder }: FolderSortOptionMetadata) => {
+    // Update both folder and album sort settings together
+    const newOrder = $folderViewSettings.sortBy === id 
+      ? flipOrdering($folderViewSettings.sortOrder) 
+      : defaultOrder;
+    
+    $folderViewSettings.sortBy = id;
+    $folderViewSettings.sortOrder = newOrder;
+    
+    // Map folder sort to album sort (they have the same enum values)
+    $albumViewSettings.sortBy = id as AlbumSortBy;
+    $albumViewSettings.sortOrder = newOrder;
+  };
+
   const handleChangeListMode = () => {
     $folderViewSettings.view =
       $folderViewSettings.view === FolderViewMode.Cover ? FolderViewMode.List : FolderViewMode.Cover;
+  };
+
+  const handleChangeUnifiedListMode = () => {
+    // Toggle both folder and album view modes together
+    const newView = $folderViewSettings.view === FolderViewMode.Cover ? FolderViewMode.List : FolderViewMode.Cover;
+    $folderViewSettings.view = newView;
+    $albumViewSettings.view = newView === FolderViewMode.Cover ? AlbumViewMode.Cover : AlbumViewMode.List;
   };
 
   const handleChangeAlbumFilter = (filter: string, defaultFilter: AlbumFilter) => {
@@ -229,6 +274,21 @@
   });
 </script>
 
+<!-- Unified Ownership Filter (applies to both folders and albums) -->
+<div class="hidden xl:block h-10">
+  <GroupTab
+    label={$t('library')}
+    filters={Object.values(unifiedFilterNames)}
+    selected={selectedUnifiedFilter}
+    onSelect={(selected) => handleChangeUnifiedFilter(selected)}
+  />
+</div>
+
+<!-- Unified Search (for both folders and albums) -->
+<div class="hidden xl:block h-10 xl:w-60 2xl:w-80">
+  <SearchBar placeholder={$t('search')} bind:name={searchQuery} showLoadingSpinner={false} />
+</div>
+
 <!-- Unified Create Menu -->
 <ButtonContextMenu icon={mdiPlusBoxOutline} title={$t('create')}>
   <MenuOption
@@ -253,39 +313,24 @@
   />
 </ButtonContextMenu>
 
-<!-- Unified Ownership Filter (applies to both folders and albums) -->
-<div class="hidden xl:block h-10">
-  <GroupTab
-    label={$t('library')}
-    filters={Object.values(unifiedFilterNames)}
-    selected={selectedUnifiedFilter}
-    onSelect={(selected) => handleChangeUnifiedFilter(selected)}
-  />
-</div>
-
-<!-- Unified Search (for both folders and albums) -->
-<div class="hidden xl:block h-10 xl:w-60 2xl:w-80">
-  <SearchBar placeholder={$t('search')} bind:name={searchQuery} showLoadingSpinner={false} />
-</div>
-
-<!-- Sort Folders -->
+<!-- Unified Sort (for both folders and albums) -->
 <Dropdown
-  title={$t('sort_folders_by')}
+  title={$t('sort_albums_by')}
   options={Object.values(sortOptionsMetadata)}
   selectedOption={selectedSortOption}
-  onSelect={handleChangeSortBy}
+  onSelect={handleChangeUnifiedSortBy}
   render={({ id }) => ({
     title: folderSortByNames[id],
     icon: sortIcon,
   })}
 />
 
-<!-- Group Folders -->
+<!-- Unified Group By (for both folders and albums) -->
 <Dropdown
-  title={$t('group_folders_by')}
+  title={$t('group_albums_by')}
   options={Object.values(groupOptionsMetadata)}
   selectedOption={selectedGroupOption}
-  onSelect={handleChangeGroupBy}
+  onSelect={handleChangeUnifiedGroupBy}
   render={({ id, isDisabled }) => ({
     title: folderGroupByNames[id],
     icon: groupIcon,
@@ -293,14 +338,14 @@
   })}
 />
 
-{#if getSelectedFolderGroupOption($folderViewSettings) !== FolderGroupBy.None}
+<!-- Unified Expand/Collapse Groups (for both folders and albums) -->
+{#if getSelectedFolderGroupOption($folderViewSettings) !== FolderGroupBy.None || getSelectedAlbumGroupOption($albumViewSettings) !== AlbumGroupBy.None}
   <span in:fly={{ x: -50, duration: 250 }}>
-    <!-- Expand Folder Groups -->
     <div class="hidden xl:flex gap-0">
       <div class="block">
         <IconButton
           title={$t('expand_all')}
-          onclick={() => expandAllFolderGroups()}
+          onclick={() => handleExpandAllGroups()}
           variant="ghost"
           color="secondary"
           shape="round"
@@ -309,11 +354,10 @@
         />
       </div>
 
-      <!-- Collapse Folder Groups -->
       <div class="block">
         <IconButton
           title={$t('collapse_all')}
-          onclick={() => collapseAllFolderGroups(folderGroups)}
+          onclick={() => handleCollapseAllGroups()}
           variant="ghost"
           color="secondary"
           shape="round"
@@ -325,11 +369,11 @@
   </span>
 {/if}
 
-<!-- Cover/List Display Toggle for Folders -->
+<!-- Unified Cover/List Display Toggle (for both folders and albums) -->
 {#if $folderViewSettings.view === FolderViewMode.List}
   <Button
     leadingIcon={mdiViewGridOutline}
-    onclick={() => handleChangeListMode()}
+    onclick={() => handleChangeUnifiedListMode()}
     size="small"
     variant="ghost"
     color="secondary"
@@ -339,87 +383,7 @@
 {:else}
   <Button
     leadingIcon={mdiFormatListBulletedSquare}
-    onclick={() => handleChangeListMode()}
-    size="small"
-    variant="ghost"
-    color="secondary"
-  >
-    <Text class="hidden md:block">{$t('list')}</Text>
-  </Button>
-{/if}
-
-<!-- Sort Albums -->
-<Dropdown
-  title={$t('sort_albums_by')}
-  options={Object.values(albumSortOptionsMetadata)}
-  selectedOption={selectedAlbumSortOption}
-  onSelect={handleChangeAlbumSortBy}
-  render={({ id }) => ({
-    title: albumSortByNames[id],
-    icon: albumSortIcon,
-  })}
-/>
-
-<!-- Group Albums -->
-<Dropdown
-  title={$t('group_albums_by')}
-  options={Object.values(albumGroupOptionsMetadata)}
-  selectedOption={selectedAlbumGroupOption}
-  onSelect={handleChangeAlbumGroupBy}
-  render={({ id, isDisabled }) => ({
-    title: albumGroupByNames[id],
-    icon: albumGroupIcon,
-    disabled: isDisabled(),
-  })}
-/>
-
-{#if getSelectedAlbumGroupOption($albumViewSettings) !== AlbumGroupBy.None}
-  <span in:fly={{ x: -50, duration: 250 }}>
-    <!-- Expand Album Groups -->
-    <div class="hidden xl:flex gap-0">
-      <div class="block">
-        <IconButton
-          title={$t('expand_all')}
-          onclick={() => expandAllAlbumGroups()}
-          variant="ghost"
-          color="secondary"
-          shape="round"
-          icon={mdiUnfoldMoreHorizontal}
-          aria-label={$t('expand_all')}
-        />
-      </div>
-
-      <!-- Collapse Album Groups -->
-      <div class="block">
-        <IconButton
-          title={$t('collapse_all')}
-          onclick={() => collapseAllAlbumGroups(albumGroups)}
-          variant="ghost"
-          color="secondary"
-          shape="round"
-          icon={mdiUnfoldLessHorizontal}
-          aria-label={$t('collapse_all')}
-        />
-      </div>
-    </div>
-  </span>
-{/if}
-
-<!-- Cover/List Display Toggle for Albums -->
-{#if $albumViewSettings.view === AlbumViewMode.List}
-  <Button
-    leadingIcon={mdiViewGridOutline}
-    onclick={() => handleChangeAlbumListMode()}
-    size="small"
-    variant="ghost"
-    color="secondary"
-  >
-    <Text class="hidden md:block">{$t('covers')}</Text>
-  </Button>
-{:else}
-  <Button
-    leadingIcon={mdiFormatListBulletedSquare}
-    onclick={() => handleChangeAlbumListMode()}
+    onclick={() => handleChangeUnifiedListMode()}
     size="small"
     variant="ghost"
     color="secondary"

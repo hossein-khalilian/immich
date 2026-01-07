@@ -49,10 +49,15 @@
   import { invalidateAll } from '$app/navigation';
   import Folders from '$lib/components/folder-page/folders-list.svelte';
   import AlbumCardGroup from '$lib/components/album-page/album-card-group.svelte';
+  import Albums from '$lib/components/album-page/albums-list.svelte';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import EmptyPlaceholder from '$lib/components/shared-components/empty-placeholder.svelte';
   import { scrollMemory } from '$lib/actions/scroll-memory';
-  import { folderViewSettings } from '$lib/stores/preferences.store';
+  import { folderViewSettings, albumViewSettings } from '$lib/stores/preferences.store';
+  import LibraryControls from '$lib/components/library-page/library-controls.svelte';
+  import GroupTab from '$lib/elements/GroupTab.svelte';
+  import SearchBar from '$lib/elements/SearchBar.svelte';
+  import { FolderFilter, AlbumFilter } from '$lib/stores/preferences.store';
   import { handleError } from '$lib/utils/handle-error';
   import {
     isFoldersRoute,
@@ -293,6 +298,10 @@
   let subfolders = $derived(data.subfolders || []);
   let folderAlbums = $derived(folder.albums || []);
 
+  let searchQuery = $state('');
+  let folderGroups: string[] = $state([]);
+  let albumGroups: string[] = $state([]);
+
   const containsEditors = $derived(folder?.shared && folderUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const folderUsersList = $derived(
     showFolderUsers && containsEditors ? [folder.owner, ...folderUsers.map(({ user }) => user)] : [],
@@ -430,30 +439,27 @@
         icon={mdiArrowLeft}
         onclick={() => goto(backUrl)}
       />
-      <ButtonContextMenu icon={mdiPlusBoxOutline} title={$t('create')}>
-        <MenuOption
-          icon={mdiFolderPlusOutline}
-          text={$t('create_folder')}
-          onClick={async () => {
-            const result = await modalManager.show(FolderCreateModal, { parentId: folder.id });
-            if (result) {
-              await invalidateAll();
-            }
-          }}
-        />
-        <MenuOption
-          icon={mdiImagePlusOutline}
-          text={$t('create_album')}
-          onClick={async () => {
-            const result = await modalManager.show(AlbumCreateModal, { folderId: folder.id });
-            if (result) {
-              await invalidateAll();
-            }
-          }}
-        />
-      </ButtonContextMenu>
+      <LibraryControls {folderGroups} {albumGroups} bind:searchQuery />
     </div>
   {/snippet}
+
+  <div class="xl:hidden">
+    <div class="w-fit h-14 dark:text-immich-dark-fg py-2">
+      <GroupTab
+        label={$t('library')}
+        filters={[FolderFilter.All, FolderFilter.Owned, FolderFilter.Shared]}
+        selected={$folderViewSettings.filter}
+        onSelect={(selected) => {
+          // Update both folder and album filters to match
+          $folderViewSettings.filter = selected;
+          $albumViewSettings.filter = selected;
+        }}
+      />
+    </div>
+    <div class="w-60">
+      <SearchBar placeholder={$t('search')} bind:name={searchQuery} showLoadingSpinner={false} />
+    </div>
+  </div>
 
   <!-- Content -->
   {#if subfolders.length === 0 && folderAlbums.length === 0}
@@ -476,8 +482,8 @@
           sharedFolders={[]}
           userSettings={$folderViewSettings}
           allowEdit
-          searchQuery=""
-          folderGroupIds={[]}
+          {searchQuery}
+          bind:folderGroupIds={folderGroups}
           onlyRootFolders={false}
         >
           {#snippet empty()}
@@ -496,11 +502,18 @@
             {$t('albums')} ({folderAlbums.length})
           </h2>
         </div>
-        <AlbumCardGroup
-          albums={folderAlbums}
-          showDateRange={false}
-          showItemCount={true}
-        />
+        <Albums
+          ownedAlbums={folderAlbums}
+          sharedAlbums={[]}
+          userSettings={$albumViewSettings}
+          allowEdit
+          {searchQuery}
+          bind:albumGroupIds={albumGroups}
+        >
+          {#snippet empty()}
+            <!-- Empty handled above -->
+          {/snippet}
+        </Albums>
       </div>
     {/if}
   {/if}
