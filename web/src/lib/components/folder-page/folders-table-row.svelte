@@ -9,7 +9,7 @@
   // @ts-expect-error - Folder SDK functions will be available after SDK regeneration
   import type { FolderResponseDto } from '@immich/sdk';
   import { Icon, IconButton } from '@immich/ui';
-  import { mdiDotsVertical, mdiShareVariantOutline } from '@mdi/js';
+  import { mdiDotsVertical, mdiFolder, mdiShareVariantOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -44,7 +44,10 @@
   {oncontextmenu}
 >
   <td class="text-md text-ellipsis text-start w-8/12 sm:w-4/12 md:w-4/12 xl:w-[30%] 2xl:w-[40%] items-center">
-    {folder.folderName}
+    <div class="flex items-center gap-2">
+      <Icon icon={mdiFolder} size="18" class="text-immich-primary dark:text-immich-dark-primary flex-shrink-0" />
+      <span>{folder.folderName}</span>
+    </div>
     {#if folder.shared}
       <Icon
         icon={mdiShareVariantOutline}

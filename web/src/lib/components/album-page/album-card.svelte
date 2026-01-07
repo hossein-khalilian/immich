@@ -4,8 +4,8 @@
   import { getContextMenuPositionFromEvent, type ContextMenuPosition } from '$lib/utils/context-menu';
   import { getShortDateRange } from '$lib/utils/date-time';
   import type { AlbumResponseDto } from '@immich/sdk';
-  import { IconButton } from '@immich/ui';
-  import { mdiDotsVertical } from '@mdi/js';
+  import { Icon, IconButton } from '@immich/ui';
+  import { mdiDotsVertical, mdiImageAlbum } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -56,16 +56,25 @@
     </div>
   {/if}
 
-  <AlbumCover {album} {preload} class="transition-all duration-300 hover:shadow-lg" />
+  <div class="relative">
+    <AlbumCover {album} {preload} class="transition-all duration-300 hover:shadow-lg" />
+    <!-- Album Icon Badge -->
+    <div class="absolute bottom-2 start-2 bg-immich-primary/90 dark:bg-immich-dark-primary/90 rounded-lg p-2 shadow-lg">
+      <Icon icon={mdiImageAlbum} size="20" class="text-white" />
+    </div>
+  </div>
 
   <div class="mt-4">
-    <p
-      class="w-full leading-6 text-lg line-clamp-2 font-semibold text-black dark:text-white group-hover:text-primary"
-      data-testid="album-name"
-      title={album.albumName}
-    >
-      {album.albumName}
-    </p>
+    <div class="flex items-center gap-2">
+      <Icon icon={mdiImageAlbum} size="18" class="text-immich-primary dark:text-immich-dark-primary flex-shrink-0" />
+      <p
+        class="w-full leading-6 text-lg line-clamp-2 font-semibold text-black dark:text-white group-hover:text-primary"
+        data-testid="album-name"
+        title={album.albumName}
+      >
+        {album.albumName}
+      </p>
+    </div>
 
     {#if showDateRange && album.startDate && album.endDate}
       <p class="flex text-sm dark:text-immich-dark-fg capitalize">

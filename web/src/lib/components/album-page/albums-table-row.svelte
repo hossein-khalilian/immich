@@ -8,7 +8,7 @@
   import type { ContextMenuPosition } from '$lib/utils/context-menu';
   import type { AlbumResponseDto } from '@immich/sdk';
   import { Icon, IconButton } from '@immich/ui';
-  import { mdiDotsVertical, mdiShareVariantOutline } from '@mdi/js';
+  import { mdiDotsVertical, mdiImageAlbum, mdiShareVariantOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -43,7 +43,10 @@
   {oncontextmenu}
 >
   <td class="text-md text-ellipsis text-start w-8/12 sm:w-4/12 md:w-4/12 xl:w-[30%] 2xl:w-[40%] items-center">
-    {album.albumName}
+    <div class="flex items-center gap-2">
+      <Icon icon={mdiImageAlbum} size="18" class="text-immich-primary dark:text-immich-dark-primary flex-shrink-0" />
+      <span>{album.albumName}</span>
+    </div>
     {#if album.shared}
       <Icon
         icon={mdiShareVariantOutline}

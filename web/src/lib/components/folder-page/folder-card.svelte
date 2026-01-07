@@ -5,8 +5,8 @@
   import { getShortDateRange } from '$lib/utils/date-time';
   // @ts-expect-error - Folder SDK functions will be available after SDK regeneration
   import type { FolderResponseDto } from '@immich/sdk';
-  import { IconButton } from '@immich/ui';
-  import { mdiDotsVertical } from '@mdi/js';
+  import { Icon, IconButton } from '@immich/ui';
+  import { mdiDotsVertical, mdiFolder } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -57,16 +57,25 @@
     </div>
   {/if}
 
-  <FolderCover {folder} {preload} class="transition-all duration-300 hover:shadow-lg" />
+  <div class="relative">
+    <FolderCover {folder} {preload} class="transition-all duration-300 hover:shadow-lg" />
+    <!-- Folder Icon Badge -->
+    <div class="absolute bottom-2 start-2 bg-immich-primary/90 dark:bg-immich-dark-primary/90 rounded-lg p-2 shadow-lg">
+      <Icon icon={mdiFolder} size="20" class="text-white" />
+    </div>
+  </div>
 
   <div class="mt-4">
-    <p
-      class="w-full leading-6 text-lg line-clamp-2 font-semibold text-black dark:text-white group-hover:text-primary"
-      data-testid="folder-name"
-      title={folder.folderName}
-    >
-      {folder.folderName}
-    </p>
+    <div class="flex items-center gap-2">
+      <Icon icon={mdiFolder} size="18" class="text-immich-primary dark:text-immich-dark-primary flex-shrink-0" />
+      <p
+        class="w-full leading-6 text-lg line-clamp-2 font-semibold text-black dark:text-white group-hover:text-primary"
+        data-testid="folder-name"
+        title={folder.folderName}
+      >
+        {folder.folderName}
+      </p>
+    </div>
 
     {#if showDateRange && folder.startDate && folder.endDate}
       <p class="flex text-sm dark:text-immich-dark-fg capitalize">
