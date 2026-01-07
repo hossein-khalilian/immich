@@ -26,7 +26,11 @@
   import { normalizeSearchString } from '$lib/utils/string-utils';
   import { addUsersToAlbum, type AlbumResponseDto, type AlbumUserAddDto } from '@immich/sdk';
   import { modalManager } from '@immich/ui';
-  import { mdiDeleteOutline, mdiDownload, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import { mdiDeleteOutline, mdiDownload, mdiFolderMove, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import FolderMoveModal from '$lib/modals/FolderMoveModal.svelte';
+  import { addAlbumsToFolder, removeAlbumsFromFolder, getAllFolders } from '$lib/utils/folder-api';
+  import { invalidateAll } from '$app/navigation';
+  import { toastManager } from '@immich/ui';
   import { groupBy } from 'lodash-es';
   import { onMount, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -248,7 +252,7 @@
     isOpen = false;
   };
 
-  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete') => {
+  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete' | 'move') => {
     closeAlbumContextMenu();
 
     if (!selectedAlbum) {
@@ -289,6 +293,40 @@
 
       case 'delete': {
         await handleDeleteAlbum(selectedAlbum);
+        break;
+      }
+
+      case 'move': {
+        // Find current folder for this album using the API
+        let currentFolderId: string | null = null;
+        try {
+          const foldersWithAlbum = await getAllFolders({ albumId: selectedAlbum.id });
+          if (foldersWithAlbum.length > 0) {
+            currentFolderId = foldersWithAlbum[0].id; // Albums can only be in one folder
+          }
+        } catch (error) {
+          console.error('Failed to find current folder:', error);
+        }
+
+        const result = await modalManager.show(FolderMoveModal, {
+          currentParentId: currentFolderId,
+        });
+        if (result !== undefined) {
+          try {
+            // Remove from current folder if it exists
+            if (currentFolderId) {
+              await removeAlbumsFromFolder(currentFolderId, [selectedAlbum.id]);
+            }
+            // Add to new folder if selected (null means remove from all folders)
+            if (result !== null) {
+              await addAlbumsToFolder(result, [selectedAlbum.id]);
+            }
+            toastManager.success($t('album_info_updated'));
+            await invalidateAll();
+          } catch (error) {
+            handleError(error, $t('errors.unable_to_update_album_info'));
+          }
+        }
         break;
       }
     }
@@ -377,6 +415,7 @@
   {#if showFullContextMenu}
     <MenuOption icon={mdiRenameOutline} text={$t('edit_album')} onClick={() => handleSelect('edit')} />
     <MenuOption icon={mdiShareVariantOutline} text={$t('share')} onClick={() => handleSelect('share')} />
+    <MenuOption icon={mdiFolderMove} text={$t('move')} onClick={() => handleSelect('move')} />
   {/if}
   <MenuOption icon={mdiDownload} text={$t('download')} onClick={() => handleSelect('download')} />
   {#if showFullContextMenu}

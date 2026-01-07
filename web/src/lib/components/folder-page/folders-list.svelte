@@ -30,7 +30,11 @@
   import { addUsersToFolder } from '$lib/utils/folder-api';
   import type { FolderResponseDto, FolderUserAddDto } from '$lib/types/folder-sdk';
   import { modalManager } from '@immich/ui';
-  import { mdiDeleteOutline, mdiDownload, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import { mdiDeleteOutline, mdiDownload, mdiFolderMove, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import FolderMoveModal from '$lib/modals/FolderMoveModal.svelte';
+  import { updateFolderInfo } from '$lib/utils/folder-api';
+  import { invalidateAll } from '$app/navigation';
+  import { toastManager } from '@immich/ui';
   import { groupBy } from 'lodash-es';
   import { onMount, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -211,7 +215,7 @@
     isOpen = false;
   };
 
-  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete') => {
+  const handleSelect = async (action: 'edit' | 'share' | 'download' | 'delete' | 'move') => {
     closeFolderContextMenu();
 
     if (!selectedFolder) {
@@ -252,6 +256,23 @@
 
       case 'delete': {
         await handleDeleteFolder(selectedFolder);
+        break;
+      }
+
+      case 'move': {
+        const result = await modalManager.show(FolderMoveModal, {
+          excludeFolderId: selectedFolder.id,
+          currentParentId: selectedFolder.parentId,
+        });
+        if (result !== undefined) {
+          try {
+            await updateFolderInfo(selectedFolder.id, { parentId: result });
+            toastManager.success($t('folder_info_updated'));
+            await invalidateAll();
+          } catch (error) {
+            handleError(error, $t('errors.unable_to_update_folder_info'));
+          }
+        }
         break;
       }
     }
@@ -345,6 +366,7 @@
   {#if showFullContextMenu}
     <MenuOption icon={mdiRenameOutline} text={$t('edit_folder')} onClick={() => handleSelect('edit')} />
     <MenuOption icon={mdiShareVariantOutline} text={$t('share')} onClick={() => handleSelect('share')} />
+    <MenuOption icon={mdiFolderMove} text={$t('move')} onClick={() => handleSelect('move')} />
   {/if}
   <MenuOption icon={mdiDownload} text={$t('download')} onClick={() => handleSelect('download')} />
   {#if showFullContextMenu}

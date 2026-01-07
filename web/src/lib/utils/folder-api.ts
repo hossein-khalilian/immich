@@ -146,6 +146,38 @@ export const removeAssetFromFolder = async (id: string, assetIds: string[]): Pro
   return data;
 };
 
+export const addAlbumsToFolder = async (id: string, albumIds: string[]): Promise<any> => {
+  const queryString = buildQueryString(authManager.params);
+  const url = `${getBaseUrl()}/folders/${id}/albums${queryString ? `?${queryString}` : ''}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ ids: albumIds }),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to add albums to folder: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+export const removeAlbumsFromFolder = async (id: string, albumIds: string[]): Promise<any> => {
+  const queryString = buildQueryString(authManager.params);
+  const url = `${getBaseUrl()}/folders/${id}/albums${queryString ? `?${queryString}` : ''}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ ids: albumIds }),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to remove albums from folder: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
 export const getSubfolders = async (id: string): Promise<FolderResponseDto[]> => {
   const queryString = buildQueryString(authManager.params);
   const url = `${getBaseUrl()}/folders/${id}/subfolders${queryString ? `?${queryString}` : ''}`;
