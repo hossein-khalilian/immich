@@ -26,7 +26,6 @@
   let searchQuery = $state('');
   let folderGroups: string[] = $state([]);
   let albumGroups: string[] = $state([]);
-  let albumSearchQuery = $state('');
 
   const totalFolders = $derived(data.folders.length + data.sharedFolders.length);
   const totalAlbums = $derived(data.albums.length + data.sharedAlbums.length);
@@ -36,7 +35,7 @@
 <UserPageLayout title={data.meta.title} use={[[scrollMemory, { routeStartsWith: AppRoute.FOLDERS }]]}>
   {#snippet buttons()}
     <div class="flex place-items-center gap-2">
-      <LibraryControls {folderGroups} {albumGroups} bind:searchQuery bind:albumSearchQuery />
+      <LibraryControls {folderGroups} {albumGroups} bind:searchQuery />
     </div>
   {/snippet}
 
@@ -54,7 +53,7 @@
       />
     </div>
     <div class="w-60">
-      <SearchBar placeholder={$t('search_folders')} bind:name={searchQuery} showLoadingSpinner={false} />
+      <SearchBar placeholder={$t('search')} bind:name={searchQuery} showLoadingSpinner={false} />
     </div>
   </div>
 
@@ -106,17 +105,12 @@
           {$t('albums')} ({totalAlbums})
         </h2>
       </div>
-      <div class="xl:hidden mb-4">
-        <div class="w-60">
-          <SearchBar placeholder={$t('search_albums')} bind:name={albumSearchQuery} showLoadingSpinner={false} />
-        </div>
-      </div>
       <Albums
         ownedAlbums={data.albums}
         sharedAlbums={data.sharedAlbums}
         userSettings={$albumViewSettings}
         allowEdit
-        searchQuery={albumSearchQuery}
+        {searchQuery}
         bind:albumGroupIds={albumGroups}
       >
         {#snippet empty()}

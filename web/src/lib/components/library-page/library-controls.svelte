@@ -66,10 +66,9 @@
     folderGroups: string[];
     albumGroups: string[];
     searchQuery: string;
-    albumSearchQuery: string;
   }
 
-  let { folderGroups, albumGroups, searchQuery = $bindable(), albumSearchQuery = $bindable() }: Props = $props();
+  let { folderGroups, albumGroups, searchQuery = $bindable() }: Props = $props();
 
   const flipOrdering = (ordering: string) => {
     return ordering === SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc;
@@ -264,9 +263,9 @@
   />
 </div>
 
-<!-- Search Folders -->
+<!-- Unified Search (for both folders and albums) -->
 <div class="hidden xl:block h-10 xl:w-60 2xl:w-80">
-  <SearchBar placeholder={$t('search_folders')} bind:name={searchQuery} showLoadingSpinner={false} />
+  <SearchBar placeholder={$t('search')} bind:name={searchQuery} showLoadingSpinner={false} />
 </div>
 
 <!-- Sort Folders -->
@@ -348,11 +347,6 @@
     <Text class="hidden md:block">{$t('list')}</Text>
   </Button>
 {/if}
-
-<!-- Search Albums -->
-<div class="hidden xl:block h-10 xl:w-60 2xl:w-80">
-  <SearchBar placeholder={$t('search_albums')} bind:name={albumSearchQuery} showLoadingSpinner={false} />
-</div>
 
 <!-- Sort Albums -->
 <Dropdown
