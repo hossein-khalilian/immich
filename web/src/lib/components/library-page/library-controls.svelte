@@ -316,7 +316,7 @@
 
 <!-- Unified Sort (for both folders and albums) -->
 <Dropdown
-  title={$t('sort_albums_by')}
+  title={$t('sort_by')}
   options={Object.values(sortOptionsMetadata)}
   selectedOption={selectedSortOption}
   onSelect={handleChangeUnifiedSortBy}
@@ -328,7 +328,7 @@
 
 <!-- Unified Group By (for both folders and albums) -->
 <Dropdown
-  title={$t('group_albums_by')}
+  title={$t('group_by')}
   options={Object.values(groupOptionsMetadata)}
   selectedOption={selectedGroupOption}
   onSelect={handleChangeUnifiedGroupBy}
