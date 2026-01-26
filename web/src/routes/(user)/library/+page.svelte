@@ -11,10 +11,11 @@
   import { FolderFilter, folderViewSettings, AlbumFilter, albumViewSettings } from '$lib/stores/preferences.store';
   import { invalidateAll } from '$app/navigation';
   import { t } from 'svelte-i18n';
-  import { modalManager } from '@immich/ui';
+  import { modalManager, Breadcrumbs } from '@immich/ui';
   import FolderCreateModal from '$lib/modals/FolderCreateModal.svelte';
-  import { mdiFolderOutline, mdiImageAlbum } from '@mdi/js';
+  import { mdiFolderOutline, mdiImageAlbum, mdiSlashForward } from '@mdi/js';
   import { Icon } from '@immich/ui';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import type { PageData } from './$types';
 
   interface Props {
@@ -30,6 +31,8 @@
   const totalFolders = $derived(data.folders.length + data.sharedFolders.length);
   const totalAlbums = $derived(data.albums.length + data.sharedAlbums.length);
   const totalItems = $derived(totalFolders + totalAlbums);
+
+  const breadcrumbs = $derived([{ title: $t('library') }]);
 </script>
 
 <UserPageLayout title={data.meta.title} use={[[scrollMemory, { routeStartsWith: AppRoute.FOLDERS }]]}>
@@ -38,6 +41,14 @@
       <LibraryControls {folderGroups} {albumGroups} bind:searchQuery />
     </div>
   {/snippet}
+
+  <nav class="mb-4 flex items-center gap-2 px-2 py-2 bg-gray-50 dark:bg-immich-dark-gray/50 rounded-lg border border-gray-200 dark:border-gray-700" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm">
+      <li class="flex items-center">
+        <span class="text-gray-700 dark:text-gray-300 font-medium">{$t('library')}</span>
+      </li>
+    </ol>
+  </nav>
 
   <div class="xl:hidden">
     <div class="w-fit h-14 dark:text-immich-dark-fg py-2">

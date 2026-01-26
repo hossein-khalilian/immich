@@ -68,10 +68,13 @@
   } from '$lib/utils/navigation';
   import { AlbumUserRole, AssetOrder, AssetVisibility } from '@immich/sdk';
   import { Button, Icon, IconButton, modalManager, toastManager } from '@immich/ui';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import {
     mdiAccountEye,
     mdiAccountEyeOutline,
     mdiArrowLeft,
+    mdiChevronRight,
+    mdiChevronLeft,
     mdiCogOutline,
     mdiDeleteOutline,
     mdiDotsVertical,
@@ -296,6 +299,31 @@
   let folderId = $derived(folder.id);
   let folderUsers = $derived(folder.folderUsers || []);
   let subfolders = $derived(data.subfolders || []);
+
+  // Build breadcrumb path by fetching parent folders
+  let breadcrumbPath = $state<Array<{ id: string; name: string }>>([]);
+  
+  $effect(async () => {
+    const path: Array<{ id: string; name: string }> = [];
+    let currentFolder = folder;
+    
+    // Start with current folder
+    path.unshift({ id: currentFolder.id, name: currentFolder.folderName });
+    
+    // Traverse up the parent chain
+    while (currentFolder.parentId) {
+      try {
+        const parentFolder = await getFolderInfo(currentFolder.parentId);
+        path.unshift({ id: parentFolder.id, name: parentFolder.folderName });
+        currentFolder = parentFolder;
+      } catch {
+        // If we can't fetch parent, stop
+        break;
+      }
+    }
+    
+    breadcrumbPath = path;
+  });
   let folderAlbums = $derived(folder.albums || []);
 
   let searchQuery = $state('');
@@ -442,6 +470,30 @@
       <LibraryControls {folderGroups} {albumGroups} bind:searchQuery currentFolderId={folder.id} />
     </div>
   {/snippet}
+
+  <nav class="mb-4 flex items-center gap-2 px-2 py-2 bg-gray-50 dark:bg-immich-dark-gray/50 rounded-lg border border-gray-200 dark:border-gray-700" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm">
+      <li class="flex items-center">
+        <a href="/library" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+          {$t('library')}
+        </a>
+      </li>
+      {#each breadcrumbPath as crumb, index}
+        <li class="flex items-center">
+          <Icon icon={languageManager.rtl ? mdiChevronLeft : mdiChevronRight} class="text-gray-400 dark:text-gray-500" size="16" />
+        </li>
+        <li class="flex items-center">
+          {#if index < breadcrumbPath.length - 1}
+            <a href={`/library/folders/${crumb.id}`} class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+              {crumb.name}
+            </a>
+          {:else}
+            <span class="text-gray-700 dark:text-gray-300 font-medium">{crumb.name}</span>
+          {/if}
+        </li>
+      {/each}
+    </ol>
+  </nav>
 
   <div class="xl:hidden">
     <div class="w-fit h-14 dark:text-immich-dark-fg py-2">

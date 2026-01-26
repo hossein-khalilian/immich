@@ -19,6 +19,7 @@
     header?: Snippet;
     sidebar?: Snippet;
     buttons?: Snippet;
+    breadcrumbs?: Snippet;
     children?: Snippet;
   }
 
@@ -32,11 +33,14 @@
     header,
     sidebar,
     buttons,
+    breadcrumbs,
     children,
   }: Props = $props();
 
   let scrollbarClass = $derived(scrollbar ? 'immich-scrollbar' : 'scrollbar-hidden');
-  let hasTitleClass = $derived(title ? 'top-16 h-[calc(100%-(--spacing(16)))]' : 'top-0 h-full');
+  let hasTitle = $derived(title || buttons || breadcrumbs);
+  let hasTitleClass = $derived(hasTitle ? 'top-16 h-[calc(100%-(--spacing(16)))]' : 'top-0 h-full');
+  let hasBreadcrumbsClass = $derived(breadcrumbs ? 'top-24 h-[calc(100%-(--spacing(24)))]' : hasTitleClass);
 </script>
 
 <header>
@@ -60,21 +64,28 @@
   {/if}
 
   <main class="relative">
-    <div class="{scrollbarClass} absolute {hasTitleClass} w-full overflow-y-auto p-2" use:useActions={use}>
+    <div class="{scrollbarClass} absolute {hasBreadcrumbsClass} w-full overflow-y-auto p-2" use:useActions={use}>
       {@render children?.()}
     </div>
 
-    {#if title || buttons}
-      <div class="absolute flex h-16 w-full place-items-center justify-between border-b p-2 text-dark">
-        <div class="flex gap-2 items-center">
-          {#if title}
-            <div class="font-medium outline-none pe-8" tabindex="-1" id={headerId}>{title}</div>
-          {/if}
-          {#if description}
-            <p class="text-sm text-gray-400 dark:text-gray-600">{description}</p>
-          {/if}
+    {#if title || buttons || breadcrumbs}
+      <div class="absolute flex flex-col w-full border-b text-dark">
+        <div class="flex h-16 w-full place-items-center justify-between p-2">
+          <div class="flex gap-2 items-center">
+            {#if title}
+              <div class="font-medium outline-none pe-8" tabindex="-1" id={headerId}>{title}</div>
+            {/if}
+            {#if description}
+              <p class="text-sm text-gray-400 dark:text-gray-600">{description}</p>
+            {/if}
+          </div>
+          {@render buttons?.()}
         </div>
-        {@render buttons?.()}
+        {#if breadcrumbs}
+          <div class="px-2 pb-2">
+            {@render breadcrumbs()}
+          </div>
+        {/if}
       </div>
     {/if}
   </main>
