@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, Icon } from '@immich/ui';
   import { mdiArrowLeft, mdiArrowRight, mdiCheck } from '@mdi/js';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import type { Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
   import { fade } from 'svelte/transition';
@@ -26,6 +27,10 @@
     onNext,
     onPrevious,
   }: Props = $props();
+
+  // In RTL languages, swap arrow directions
+  const previousIcon = $derived(languageManager.rtl ? mdiArrowRight : mdiArrowLeft);
+  const nextIcon = $derived(languageManager.rtl ? mdiArrowLeft : mdiArrowRight);
 </script>
 
 <div
@@ -52,7 +57,7 @@
       <div class="w-full flex place-content-start">
         <Button
           shape="round"
-          leadingIcon={mdiArrowLeft}
+          leadingIcon={previousIcon}
           class="flex gap-2 place-content-center"
           onclick={() => {
             onLeave?.();
@@ -67,7 +72,7 @@
     <div class="flex w-full place-content-end">
       <Button
         shape="round"
-        trailingIcon={nextTitle ? mdiArrowRight : mdiCheck}
+        trailingIcon={nextTitle ? nextIcon : mdiCheck}
         onclick={() => {
           onLeave?.();
           onNext?.();
