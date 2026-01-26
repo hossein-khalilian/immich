@@ -27,22 +27,21 @@ class LanguageManager {
 
     const currentLocale = get(locale);
     
-    // Sync locale with language, but only if locale is still at default (Persian)
-    // This allows users to have custom locale settings that won't be overridden
+    // Sync locale with language to match the selected language
     if (langCode === 'fa' || langCode === defaultLang.code) {
       // For Persian, ensure locale is Persian
       if (currentLocale !== 'fa-IR-u-ca-persian') {
         locale.set('fa-IR-u-ca-persian');
       }
     } else if (langCode === 'en') {
-      // For English, set locale to English if it's still Persian (default)
-      if (currentLocale === 'fa-IR-u-ca-persian') {
+      // For English, set locale to English
+      if (currentLocale !== 'en') {
         locale.set('en');
       }
     } else {
-      // For other languages, try to use the language code as locale
-      // Only update if locale is still at default Persian
-      if (currentLocale === 'fa-IR-u-ca-persian') {
+      // For other languages, use the language code as locale
+      // Always update when switching to ensure locale matches language
+      if (currentLocale !== langCode) {
         locale.set(langCode);
       }
     }

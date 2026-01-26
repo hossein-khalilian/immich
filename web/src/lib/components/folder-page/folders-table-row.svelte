@@ -62,8 +62,10 @@
   <td class="text-md text-ellipsis text-center sm:w-2/12 md:w-2/12 xl:w-[15%] 2xl:w-[12%]">
     {#if folder.subfolderCount && folder.subfolderCount > 0}
       {$t('subfolders_count', { values: { count: folder.subfolderCount } })}
-    {:else}
+    {:else if folder.assetCount > 0}
       {$t('items_count', { values: { count: folder.assetCount } })}
+    {:else}
+      -
     {/if}
   </td>
   <td class="text-md hidden text-ellipsis text-center sm:block w-3/12 xl:w-[15%] 2xl:w-[12%]">
