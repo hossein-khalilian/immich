@@ -9,6 +9,7 @@
   import type { FolderResponseDto } from '@immich/sdk';
   import { Icon } from '@immich/ui';
   import { mdiChevronRight } from '@mdi/js';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import { t } from 'svelte-i18n';
   import { flip } from 'svelte/animate';
   import { slide } from 'svelte/transition';
@@ -49,7 +50,11 @@
       class="w-full text-start mt-2 pt-2 pe-2 pb-2 rounded-md transition-colors cursor-pointer dark:text-immich-dark-fg hover:text-primary hover:bg-subtle dark:hover:bg-immich-dark-gray"
       aria-expanded={!isCollapsed}
     >
-      <Icon icon={mdiChevronRight} size="24" class="inline-block -mt-2.5 transition-all duration-250 {iconRotation}" />
+      <Icon
+        icon={mdiChevronRight}
+        size="24"
+        class="inline-block -mt-2.5 transition-all duration-250 {iconRotation} {languageManager.rtl ? 'scale-x-[-1]' : ''}"
+      />
       <span class="font-bold text-3xl text-black dark:text-white">{group.name}</span>
       <span class="ms-1.5">({$t('folders_count', { values: { count: folders.length } })})</span>
     </button>

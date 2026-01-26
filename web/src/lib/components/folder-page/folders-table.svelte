@@ -13,6 +13,7 @@
   import type { FolderResponseDto } from '@immich/sdk';
   import { Icon } from '@immich/ui';
   import { mdiChevronRight } from '@mdi/js';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import { t } from 'svelte-i18n';
   import { slide } from 'svelte/transition';
 
@@ -60,7 +61,7 @@
             <Icon
               icon={mdiChevronRight}
               size="20"
-              class="inline-block -mt-2 transition-all duration-250 {iconRotation}"
+              class="inline-block -mt-2 transition-all duration-250 {iconRotation} {languageManager.rtl ? 'scale-x-[-1]' : ''}"
             />
             <span class="font-bold text-2xl">{folderGroup.name}</span>
             <span class="ms-1.5">

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { Icon } from '@immich/ui';
-  import { mdiChevronDown, mdiChevronLeft } from '@mdi/js';
+  import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import type { Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
 
@@ -30,6 +31,14 @@
   $effect(() => {
     isSelected = page.url.pathname.startsWith(href);
   });
+
+  let chevronIcon = $derived(
+    dropdownOpen
+      ? mdiChevronDown
+      : languageManager.rtl
+        ? mdiChevronRight
+        : mdiChevronLeft,
+  );
 </script>
 
 <div class="relative">
@@ -42,9 +51,9 @@
         onclick={() => (dropdownOpen = !dropdownOpen)}
       >
         <Icon
-          icon={dropdownOpen ? mdiChevronDown : mdiChevronLeft}
+          icon={chevronIcon}
           size="1em"
-          class="shrink-0 delay-100 duration-100 "
+          class="shrink-0 delay-100 duration-100"
           flipped={flippedLogo}
           aria-hidden
         />

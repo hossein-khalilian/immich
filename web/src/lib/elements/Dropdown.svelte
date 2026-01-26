@@ -13,7 +13,8 @@
 <script lang="ts" generics="T">
   import { clickOutside } from '$lib/actions/click-outside';
   import { Button, Icon, Text } from '@immich/ui';
-  import { mdiCheck } from '@mdi/js';
+  import { mdiCheck, mdiChevronDown } from '@mdi/js';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
   import { isEqual } from 'lodash-es';
   import { fly } from 'svelte/transition';
 
@@ -101,6 +102,12 @@
       <Icon icon={renderedSelectedOption.icon} />
     {/if}
     <Text class={hideTextOnSmallScreen ? 'hidden sm:block' : ''}>{renderedSelectedOption.title}</Text>
+    <Icon
+      icon={mdiChevronDown}
+      size="1em"
+      class="transition-transform duration-200 {showMenu ? 'rotate-180' : ''} {languageManager.rtl ? 'scale-x-[-1]' : ''}"
+      aria-hidden
+    />
   </Button>
 
   <!-- DROP DOWN MENU -->
