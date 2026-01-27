@@ -11340,6 +11340,15 @@
             }
           },
           {
+            "name": "folderId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "name": "id",
             "required": false,
             "in": "query",
@@ -20994,6 +21003,10 @@
             "nullable": true,
             "type": "string"
           },
+          "folderId": {
+            "format": "uuid",
+            "type": "string"
+          },
           "password": {
             "nullable": true,
             "type": "string"
@@ -21083,6 +21096,9 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "folder": {
+            "$ref": "#/components/schemas/FolderResponseDto"
           },
           "id": {
             "type": "string"

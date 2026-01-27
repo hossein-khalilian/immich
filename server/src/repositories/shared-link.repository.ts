@@ -3,7 +3,7 @@ import { Insertable, Kysely, NotNull, sql, Updateable } from 'kysely';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
 import _ from 'lodash';
 import { InjectKysely } from 'nestjs-kysely';
-import { Album, columns } from 'src/database';
+import { Album, columns, Folder } from 'src/database';
 import { DummyValue, GenerateSql } from 'src/decorators';
 import { MapAsset } from 'src/dtos/asset-response.dto';
 import { SharedLinkType } from 'src/enum';
@@ -14,6 +14,7 @@ export type SharedLinkSearchOptions = {
   userId: string;
   id?: string;
   albumId?: string;
+  folderId?: string;
 };
 
 @Injectable()
@@ -103,23 +104,51 @@ export class SharedLinkRepository {
             .as('album'),
         (join) => join.onTrue(),
       )
+      .leftJoinLateral(
+        (eb) =>
+          eb
+            .selectFrom('folder')
+            .selectAll('folder')
+            .whereRef('folder.id', '=', 'shared_link.folderId')
+            .where('folder.deletedAt', 'is', null)
+            .innerJoinLateral(
+              (eb) =>
+                eb
+                  .selectFrom('user')
+                  .selectAll('user')
+                  .whereRef('user.id', '=', 'folder.ownerId')
+                  .where('user.deletedAt', 'is', null)
+                  .as('owner'),
+              (join) => join.onTrue(),
+            )
+            .select((eb) => eb.fn.toJson('owner').as('owner'))
+            .as('folder'),
+        (join) => join.onTrue(),
+      )
       .select((eb) =>
         eb.fn
           .coalesce(eb.fn.jsonAgg('a').filterWhere('a.id', 'is not', null), sql`'[]'`)
           .$castTo<MapAsset[]>()
           .as('assets'),
       )
-      .groupBy(['shared_link.id', sql`"album".*`])
+      .groupBy(['shared_link.id', sql`"album".*`, sql`"folder".*`])
       .select((eb) => eb.fn.toJson('album').$castTo<Album | null>().as('album'))
+      .select((eb) => eb.fn.toJson('folder').$castTo<Folder | null>().as('folder'))
       .where('shared_link.id', '=', id)
       .where('shared_link.userId', '=', userId)
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]))
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb('folder.id', 'is not', null),
+        ]),
+      )
       .orderBy('shared_link.createdAt', 'desc')
       .executeTakeFirst();
   }
 
   @GenerateSql({ params: [{ userId: DummyValue.UUID, albumId: DummyValue.UUID }] })
-  getAll({ userId, id, albumId }: SharedLinkSearchOptions) {
+  getAll({ userId, id, albumId, folderId }: SharedLinkSearchOptions) {
     return this.db
       .selectFrom('shared_link')
       .selectAll('shared_link')
@@ -174,9 +203,54 @@ export class SharedLinkRepository {
             .as('album'),
         (join) => join.onTrue(),
       )
+      .leftJoinLateral(
+        (eb) =>
+          eb
+            .selectFrom('folder')
+            .selectAll('folder')
+            .whereRef('folder.id', '=', 'shared_link.folderId')
+            .innerJoinLateral(
+              (eb) =>
+                eb
+                  .selectFrom('user')
+                  .select([
+                    'user.id',
+                    'user.email',
+                    'user.createdAt',
+                    'user.profileImagePath',
+                    'user.isAdmin',
+                    'user.shouldChangePassword',
+                    'user.deletedAt',
+                    'user.oauthId',
+                    'user.updatedAt',
+                    'user.storageLabel',
+                    'user.name',
+                    'user.quotaSizeInBytes',
+                    'user.quotaUsageInBytes',
+                    'user.status',
+                    'user.profileChangedAt',
+                  ])
+                  .whereRef('user.id', '=', 'folder.ownerId')
+                  .where('user.deletedAt', 'is', null)
+                  .as('owner'),
+              (join) => join.onTrue(),
+            )
+            .select((eb) => eb.fn.toJson('owner').as('owner'))
+            .where('folder.deletedAt', 'is', null)
+            .as('folder'),
+        (join) => join.onTrue(),
+      )
       .select((eb) => eb.fn.toJson('album').$castTo<Album | null>().as('album'))
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]))
+      .select((eb) => eb.fn.toJson('folder').$castTo<Folder | null>().as('folder'))
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb('folder.id', 'is not', null),
+        ]),
+      )
       .$if(!!albumId, (eb) => eb.where('shared_link.albumId', '=', albumId!))
+      .$if(!!folderId, (eb) => eb.where('shared_link.folderId', '=', folderId!))
       .$if(!!id, (eb) => eb.where('shared_link.id', '=', id!))
       .orderBy('shared_link.createdAt', 'desc')
       .distinctOn(['shared_link.createdAt'])
@@ -197,14 +271,23 @@ export class SharedLinkRepository {
     return this.db
       .selectFrom('shared_link')
       .leftJoin('album', 'album.id', 'shared_link.albumId')
-      .where('album.deletedAt', 'is', null)
+      .leftJoin('folder', 'folder.id', 'shared_link.folderId')
+      .where((eb) =>
+        eb.or([eb('album.deletedAt', 'is', null), eb('folder.deletedAt', 'is', null), eb('shared_link.type', '=', SharedLinkType.Individual)]),
+      )
       .select((eb) => [
         ...columns.authSharedLink,
         jsonObjectFrom(
           eb.selectFrom('user').select(columns.authUser).whereRef('user.id', '=', 'shared_link.userId'),
         ).as('user'),
       ])
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]));
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb('folder.id', 'is not', null),
+        ]),
+      );
   }
 
   async create(entity: Insertable<SharedLinkTable> & { assetIds?: string[] }) {

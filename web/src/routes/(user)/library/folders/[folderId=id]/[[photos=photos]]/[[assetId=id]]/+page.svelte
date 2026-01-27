@@ -468,6 +468,51 @@
         onclick={() => goto(backUrl)}
       />
       <LibraryControls {folderGroups} {albumGroups} bind:searchQuery currentFolderId={folder.id} />
+
+      {#if isOwned}
+        <IconButton
+          shape="round"
+          variant="ghost"
+          color="secondary"
+          aria-label={$t('share')}
+          onclick={handleShare}
+          icon={mdiShareVariantOutline}
+        />
+      {/if}
+
+      {#if isOwned}
+        <IconButton
+          shape="round"
+          variant="ghost"
+          color="secondary"
+          aria-label={$t('download')}
+          onclick={() => handleDownloadFolder(folder)}
+          icon={mdiDownload}
+        />
+      {/if}
+
+      {#if isOwned}
+        <ButtonContextMenu
+          icon={mdiDotsVertical}
+          title={$t('folder_options')}
+          color="secondary"
+          offset={{ x: 175, y: 25 }}
+        >
+          {#if containsEditors}
+            <MenuOption
+              icon={showFolderUsers ? mdiAccountEye : mdiAccountEyeOutline}
+              text={$t('view_asset_owners')}
+              onClick={() => timelineManager?.toggleShowAssetOwners()}
+            />
+          {/if}
+          <MenuOption icon={mdiCogOutline} text={$t('options')} onClick={handleOptions} />
+          <MenuOption
+            icon={mdiDeleteOutline}
+            text={$t('delete_folder')}
+            onClick={() => handleDeleteFolder(folder)}
+          />
+        </ButtonContextMenu>
+      {/if}
     </div>
   {/snippet}
 

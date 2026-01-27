@@ -1346,6 +1346,7 @@ export type SharedLinkCreateDto = {
     assetIds?: string[];
     description?: string | null;
     expiresAt?: string | null;
+    folderId?: string;
     password?: string | null;
     showMetadata?: boolean;
     slug?: string | null;
@@ -5520,6 +5521,7 @@ export enum SearchSuggestionType {
 }
 export enum SharedLinkType {
     Album = "ALBUM",
+    Folder = "FOLDER",
     Individual = "INDIVIDUAL"
 }
 export enum Error2 {

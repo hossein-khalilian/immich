@@ -178,12 +178,15 @@ export type AuthSharedLink = {
   allowUpload: boolean;
   allowDownload: boolean;
   password: string | null;
+  folderId: string | null;
 };
 
 export type SharedLink = {
   id: string;
   album?: Album | null;
   albumId: string | null;
+  folder?: Folder | null;
+  folderId: string | null;
   allowDownload: boolean;
   allowUpload: boolean;
   assets: MapAsset[];
@@ -371,6 +374,7 @@ export const columns = {
     'shared_link.allowUpload',
     'shared_link.allowDownload',
     'shared_link.password',
+    'shared_link.folderId',
   ],
   user: userColumns,
   userWithPrefix: userWithPrefixColumns,

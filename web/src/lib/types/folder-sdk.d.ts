@@ -1,7 +1,7 @@
 // Temporary type definitions for folder SDK functions
 // These will be replaced when the SDK is regenerated from the OpenAPI spec
 
-import type { AlbumUserRole } from '@immich/sdk';
+import type { AlbumUserRole, SharedLinkType } from '@immich/sdk';
 
 export interface FolderAlbumResponseDto {
   id: string;
@@ -114,6 +114,21 @@ declare module '@immich/sdk' {
   
   // Extend getAllSharedLinks to support folderId (will be added when SDK is regenerated)
   // For now, using @ts-expect-error in FolderShareModal
+  
+  // Extend SharedLinkCreateDto to include folderId
+  export interface SharedLinkCreateDto {
+    type: SharedLinkType;
+    assetIds?: string[];
+    albumId?: string;
+    folderId?: string;
+    description?: string | null;
+    password?: string | null;
+    slug?: string | null;
+    expiresAt?: Date | null;
+    allowUpload?: boolean;
+    allowDownload?: boolean;
+    showMetadata?: boolean;
+  }
   
   export type { FolderResponseDto, CreateFolderDto, UpdateFolderDto, FolderUserAddDto, AddFolderUsersDto, BulkIdResponseDto };
 }

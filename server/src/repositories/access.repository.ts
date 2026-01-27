@@ -167,6 +167,24 @@ class FolderAccess {
       .execute()
       .then((folders) => new Set(folders.map((folder) => folder.id)));
   }
+
+  @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID_SET] })
+  @ChunkedSet({ paramIndex: 1 })
+  async checkSharedLinkAccess(sharedLinkId: string, folderIds: Set<string>) {
+    if (folderIds.size === 0) {
+      return new Set<string>();
+    }
+
+    return this.db
+      .selectFrom('shared_link')
+      .select('shared_link.folderId')
+      .where('shared_link.id', '=', sharedLinkId)
+      .where('shared_link.folderId', 'in', [...folderIds])
+      .execute()
+      .then(
+        (sharedLinks) => new Set(sharedLinks.flatMap((sharedLink) => (sharedLink.folderId ? [sharedLink.folderId] : []))),
+      );
+  }
 }
 
 class AssetAccess {

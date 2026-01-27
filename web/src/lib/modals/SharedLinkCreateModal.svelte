@@ -9,10 +9,11 @@
   interface Props {
     onClose: (success?: boolean) => void;
     albumId?: string;
+    folderId?: string;
     assetIds?: string[];
   }
 
-  let { onClose, albumId = $bindable(), assetIds = $bindable([]) }: Props = $props();
+  let { onClose, albumId = $bindable(), folderId = $bindable(), assetIds = $bindable([]) }: Props = $props();
 
   let description = $state('');
   let allowDownload = $state(true);
@@ -22,7 +23,7 @@
   let slug = $state('');
   let expiresAt = $state<string | null>(null);
 
-  let type = $derived(albumId ? SharedLinkType.Album : SharedLinkType.Individual);
+  let type = $derived(albumId ? SharedLinkType.Album : folderId ? SharedLinkType.Folder : SharedLinkType.Individual);
 
   $effect(() => {
     if (!showMetadata) {
@@ -34,6 +35,7 @@
     const success = await handleCreateSharedLink({
       type,
       albumId,
+      folderId,
       assetIds,
       expiresAt,
       allowUpload,
@@ -59,6 +61,10 @@
 >
   {#if type === SharedLinkType.Album}
     <div>{$t('album_with_link_access')}</div>
+  {/if}
+
+  {#if type === SharedLinkType.Folder}
+    <div>{$t('folder_with_link_access')}</div>
   {/if}
 
   {#if type === SharedLinkType.Individual}

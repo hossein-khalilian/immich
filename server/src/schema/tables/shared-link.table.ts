@@ -1,5 +1,6 @@
 import { SharedLinkType } from 'src/enum';
 import { AlbumTable } from 'src/schema/tables/album.table';
+import { FolderTable } from 'src/schema/tables/folder.table';
 import { UserTable } from 'src/schema/tables/user.table';
 import {
   Column,
@@ -39,6 +40,9 @@ export class SharedLinkTable {
 
   @ForeignKeyColumn(() => AlbumTable, { nullable: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   albumId!: string | null;
+
+  @ForeignKeyColumn(() => FolderTable, { nullable: true, onDelete: 'CASCADE', onUpdate: 'CASCADE', index: true })
+  folderId!: string | null;
 
   @Column({ type: 'boolean', default: true })
   allowDownload!: Generated<boolean>;

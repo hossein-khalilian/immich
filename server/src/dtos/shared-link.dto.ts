@@ -5,12 +5,16 @@ import { SharedLink } from 'src/database';
 import { HistoryBuilder, Property } from 'src/decorators';
 import { AlbumResponseDto, mapAlbumWithoutAssets } from 'src/dtos/album.dto';
 import { AssetResponseDto, mapAsset } from 'src/dtos/asset-response.dto';
+import { FolderResponseDto, mapFolderWithoutAlbums } from 'src/dtos/folder.dto';
 import { SharedLinkType } from 'src/enum';
 import { Optional, ValidateBoolean, ValidateDate, ValidateEnum, ValidateUUID } from 'src/validation';
 
 export class SharedLinkSearchDto {
   @ValidateUUID({ optional: true })
   albumId?: string;
+
+  @ValidateUUID({ optional: true })
+  folderId?: string;
 
   @ValidateUUID({ optional: true })
   @Property({ history: new HistoryBuilder().added('v2.5.0') })
@@ -26,6 +30,9 @@ export class SharedLinkCreateDto {
 
   @ValidateUUID({ optional: true })
   albumId?: string;
+
+  @ValidateUUID({ optional: true })
+  folderId?: string;
 
   @Optional({ nullable: true, emptyToNull: true })
   @IsString()
@@ -110,6 +117,7 @@ export class SharedLinkResponseDto {
   expiresAt!: Date | null;
   assets!: AssetResponseDto[];
   album?: AlbumResponseDto;
+  folder?: FolderResponseDto;
   allowUpload!: boolean;
 
   allowDownload!: boolean;
@@ -132,6 +140,7 @@ export function mapSharedLink(sharedLink: SharedLink): SharedLinkResponseDto {
     expiresAt: sharedLink.expiresAt,
     assets: linkAssets.map((asset) => mapAsset(asset)),
     album: sharedLink.album ? mapAlbumWithoutAssets(sharedLink.album) : undefined,
+    folder: sharedLink.folder ? mapFolderWithoutAlbums(sharedLink.folder) : undefined,
     allowUpload: sharedLink.allowUpload,
     allowDownload: sharedLink.allowDownload,
     showMetadata: sharedLink.showExif,
@@ -156,6 +165,7 @@ export function mapSharedLinkWithoutMetadata(sharedLink: SharedLink): SharedLink
     expiresAt: sharedLink.expiresAt,
     assets: assets.map((asset) => mapAsset(asset, { stripMetadata: true })),
     album: sharedLink.album ? mapAlbumWithoutAssets(sharedLink.album) : undefined,
+    folder: sharedLink.folder ? mapFolderWithoutAlbums(sharedLink.folder) : undefined,
     allowUpload: sharedLink.allowUpload,
     allowDownload: sharedLink.allowDownload,
     showMetadata: sharedLink.showExif,

@@ -19,9 +19,9 @@ import { getExternalDomain, OpenGraphTags } from 'src/utils/misc';
 
 @Injectable()
 export class SharedLinkService extends BaseService {
-  async getAll(auth: AuthDto, { id, albumId }: SharedLinkSearchDto): Promise<SharedLinkResponseDto[]> {
+  async getAll(auth: AuthDto, { id, albumId, folderId }: SharedLinkSearchDto): Promise<SharedLinkResponseDto[]> {
     return this.sharedLinkRepository
-      .getAll({ userId: auth.user.id, id, albumId })
+      .getAll({ userId: auth.user.id, id, albumId, folderId })
       .then((links) => links.map((link) => mapSharedLink(link)));
   }
 
@@ -54,6 +54,14 @@ export class SharedLinkService extends BaseService {
         break;
       }
 
+      case SharedLinkType.Folder: {
+        if (!dto.folderId) {
+          throw new BadRequestException('Invalid folderId');
+        }
+        await this.requireAccess({ auth, permission: Permission.FolderShare, ids: [dto.folderId] });
+        break;
+      }
+
       case SharedLinkType.Individual: {
         if (!dto.assetIds || dto.assetIds.length === 0) {
           throw new BadRequestException('Invalid assetIds');
@@ -71,6 +79,7 @@ export class SharedLinkService extends BaseService {
         userId: auth.user.id,
         type: dto.type,
         albumId: dto.albumId || null,
+        folderId: dto.folderId || null,
         assetIds: dto.assetIds,
         description: dto.description || null,
         password: dto.password,
@@ -201,14 +210,24 @@ export class SharedLinkService extends BaseService {
 
     const config = await this.getConfig({ withCache: true });
     const sharedLink = await this.findOrFail(auth.sharedLink.userId, auth.sharedLink.id);
-    const assetId = sharedLink.album?.albumThumbnailAssetId || sharedLink.assets[0]?.id;
+    const assetId =
+      sharedLink.album?.albumThumbnailAssetId ||
+      sharedLink.folder?.folderThumbnailAssetId ||
+      sharedLink.assets[0]?.id;
     const assetCount = sharedLink.assets.length > 0 ? sharedLink.assets.length : sharedLink.album?.assets?.length || 0;
     const imagePath = assetId
       ? `/api/assets/${assetId}/thumbnail?key=${sharedLink.key.toString('base64url')}`
       : '/feature-panel.png';
 
+    let title = 'Public Share';
+    if (sharedLink.album) {
+      title = sharedLink.album.albumName;
+    } else if (sharedLink.folder) {
+      title = sharedLink.folder.folderName;
+    }
+
     return {
-      title: sharedLink.album ? sharedLink.album.albumName : 'Public Share',
+      title,
       description: sharedLink.description || `${assetCount} shared photos & videos`,
       imageUrl: new URL(imagePath, getExternalDomain(config.server, defaultDomain)).href,
     };

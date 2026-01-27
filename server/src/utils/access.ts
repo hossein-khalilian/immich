@@ -96,6 +96,18 @@ const checkSharedLinkAccess = async (
       return sharedLink.allowUpload ? await access.album.checkSharedLinkAccess(sharedLinkId, ids) : new Set();
     }
 
+    case Permission.FolderRead: {
+      return await access.folder.checkSharedLinkAccess(sharedLinkId, ids);
+    }
+
+    case Permission.FolderDownload: {
+      return sharedLink.allowDownload ? await access.folder.checkSharedLinkAccess(sharedLinkId, ids) : new Set();
+    }
+
+    case Permission.FolderAlbumCreate: {
+      return sharedLink.allowUpload ? await access.folder.checkSharedLinkAccess(sharedLinkId, ids) : new Set();
+    }
+
     default: {
       return new Set<string>();
     }
