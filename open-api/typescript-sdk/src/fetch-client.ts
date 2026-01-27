@@ -657,6 +657,7 @@ export type DownloadInfoDto = {
     albumId?: string;
     archiveSize?: number;
     assetIds?: string[];
+    folderId?: string;
     userId?: string;
 };
 export type DownloadArchiveInfo = {

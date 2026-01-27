@@ -1,6 +1,7 @@
 <script lang="ts">
   import empty2Url from '$lib/assets/empty-2.svg';
   import Albums from '$lib/components/album-page/albums-list.svelte';
+  import Folders from '$lib/components/folder-page/folders-list.svelte';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import EmptyPlaceholder from '$lib/components/shared-components/empty-placeholder.svelte';
   import UserAvatar from '$lib/components/shared-components/user-avatar.svelte';
@@ -10,8 +11,13 @@
     AlbumGroupBy,
     AlbumSortBy,
     AlbumViewMode,
+    FolderFilter,
+    FolderGroupBy,
+    FolderSortBy,
+    FolderViewMode,
     SortOrder,
     type AlbumViewSettings,
+    type FolderViewSettings,
   } from '$lib/stores/preferences.store';
   import { createAlbumAndRedirect } from '$lib/utils/album-utils';
   import { Button, HStack, Text } from '@immich/ui';
@@ -31,6 +37,16 @@
     groupBy: AlbumGroupBy.None,
     groupOrder: SortOrder.Desc,
     sortBy: AlbumSortBy.MostRecentPhoto,
+    sortOrder: SortOrder.Desc,
+    collapsedGroups: {},
+  };
+
+  const folderSettings: FolderViewSettings = {
+    view: FolderViewMode.Cover,
+    filter: FolderFilter.Shared,
+    groupBy: FolderGroupBy.None,
+    groupOrder: SortOrder.Desc,
+    sortBy: FolderSortBy.MostRecentPhoto,
     sortOrder: SortOrder.Desc,
     collapsedGroups: {},
   };
@@ -78,6 +94,21 @@
               </div>
             </a>
           {/each}
+        </div>
+      </div>
+
+      <hr class="mb-4 dark:border-immich-dark-gray" />
+    {/if}
+
+    {#if data.sharedFolders && data.sharedFolders.length > 0}
+      <div class="mb-6 mt-2">
+        <div>
+          <p class="mb-4 font-medium dark:text-immich-dark-fg">{$t('folders')}</p>
+        </div>
+
+        <div>
+          <!-- Shared Folder List -->
+          <Folders sharedFolders={data.sharedFolders} userSettings={folderSettings} showOwner />
         </div>
       </div>
 

@@ -31,6 +31,54 @@ export class DownloadRepository {
       .stream();
   }
 
+  downloadFolderId(folderId: string) {
+    return builder(this.db)
+      .innerJoin('album_asset', 'asset.id', 'album_asset.assetId')
+      .innerJoin('folder_album', 'album_asset.albumId', 'folder_album.albumId')
+      .where('folder_album.folderId', '=', folderId)
+      .stream();
+  }
+
+  async getFolderHierarchyForDownload(folderId: string) {
+    // Get all descendant folders (including self)
+    const allFolders = await this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .innerJoin('folder_closure', 'folder_closure.id_descendant', 'folder.id')
+      .where('folder_closure.id_ancestor', '=', folderId)
+      .where('folder.deletedAt', 'is', null)
+      .execute();
+
+    // Get all albums in these folders
+    const albums = await this.db
+      .selectFrom('album')
+      .innerJoin('folder_album', 'folder_album.albumId', 'album.id')
+      .select(['album.id', 'album.albumName'])
+      .select('folder_album.folderId')
+      .where('folder_album.folderId', 'in', allFolders.map((f) => f.id))
+      .where('album.deletedAt', 'is', null)
+      .execute();
+
+    // Get assets with their album and folder info
+    const assets = await this.db
+      .selectFrom('asset')
+      .innerJoin('asset_exif', 'assetId', 'id')
+      .innerJoin('album_asset', 'asset.id', 'album_asset.assetId')
+      .innerJoin('folder_album', 'album_asset.albumId', 'folder_album.albumId')
+      .select([
+        'asset.id',
+        'asset.livePhotoVideoId',
+        'asset_exif.fileSizeInByte as size',
+        'album_asset.albumId',
+        'folder_album.folderId',
+      ])
+      .where('folder_album.folderId', 'in', allFolders.map((f) => f.id))
+      .where('asset.deletedAt', 'is', null)
+      .execute();
+
+    return { folders: allFolders, albums, assets };
+  }
+
   downloadUserId(userId: string) {
     return builder(this.db)
       .where('asset.ownerId', '=', userId)

@@ -349,13 +349,57 @@ export class SharedLinkRepository {
             .as('assets'),
         (join) => join.onTrue(),
       )
+      .leftJoinLateral(
+        (eb) =>
+          eb
+            .selectFrom('album')
+            .selectAll('album')
+            .whereRef('album.id', '=', 'shared_link.albumId')
+            .where('album.deletedAt', 'is', null)
+            .innerJoinLateral(
+              (eb) =>
+                eb
+                  .selectFrom('user')
+                  .selectAll('user')
+                  .whereRef('user.id', '=', 'album.ownerId')
+                  .where('user.deletedAt', 'is', null)
+                  .as('owner'),
+              (join) => join.onTrue(),
+            )
+            .select((eb) => eb.fn.toJson('owner').as('owner'))
+            .as('album'),
+        (join) => join.onTrue(),
+      )
+      .leftJoinLateral(
+        (eb) =>
+          eb
+            .selectFrom('folder')
+            .selectAll('folder')
+            .whereRef('folder.id', '=', 'shared_link.folderId')
+            .where('folder.deletedAt', 'is', null)
+            .innerJoinLateral(
+              (eb) =>
+                eb
+                  .selectFrom('user')
+                  .selectAll('user')
+                  .whereRef('user.id', '=', 'folder.ownerId')
+                  .where('user.deletedAt', 'is', null)
+                  .as('owner'),
+              (join) => join.onTrue(),
+            )
+            .select((eb) => eb.fn.toJson('owner').as('owner'))
+            .as('folder'),
+        (join) => join.onTrue(),
+      )
       .select((eb) =>
         eb.fn
           .coalesce(eb.fn.jsonAgg('assets').filterWhere('assets.id', 'is not', null), sql`'[]'`)
           .$castTo<MapAsset[]>()
           .as('assets'),
       )
-      .groupBy('shared_link.id')
+      .select((eb) => eb.fn.toJson('album').$castTo<Album | null>().as('album'))
+      .select((eb) => eb.fn.toJson('folder').$castTo<Folder | null>().as('folder'))
+      .groupBy(['shared_link.id', sql`"album".*`, sql`"folder".*`])
       .executeTakeFirstOrThrow();
   }
 }

@@ -67,14 +67,8 @@ export const handleDeleteFolder = async (folder: FolderResponseDto, options?: { 
 };
 
 export const handleDownloadFolder = async (folder: FolderResponseDto) => {
-  // TODO: Update downloadArchive to support folderId when SDK is regenerated
-  // For now, we'll need to get the asset IDs from the folder first
-  // await downloadArchive(`${folder.folderName}.zip`, { folderId: folder.id });
-  
-  // Temporary workaround: download using assetIds if available
-  // This will be fixed when the SDK is regenerated with folder support
-  const $t = await getFormatter();
-  handleError(new Error('Folder download not yet implemented'), $t('errors.unable_to_download_files'));
+  const folderName = folder.folderName || 'folder';
+  await downloadArchive(`${folderName}.zip`, { folderId: folder.id });
 };
 
 export const handleConfirmFolderDelete = async (folder: FolderResponseDto) => {

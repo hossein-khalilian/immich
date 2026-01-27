@@ -10,6 +10,9 @@ export class DownloadInfoDto {
   albumId?: string;
 
   @ValidateUUID({ optional: true })
+  folderId?: string;
+
+  @ValidateUUID({ optional: true })
   userId?: string;
 
   @IsInt()

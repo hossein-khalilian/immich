@@ -102,6 +102,9 @@ export class AssetBulkDeleteDto extends BulkIdsDto {
 export class AssetIdsDto {
   @ValidateUUID({ each: true })
   assetIds!: string[];
+
+  @ValidateUUID({ optional: true })
+  folderId?: string;
 }
 
 export enum AssetJobName {

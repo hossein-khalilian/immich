@@ -16366,6 +16366,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "folderId": {
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
@@ -16413,6 +16417,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "folderId": {
+            "format": "uuid",
+            "type": "string"
           },
           "name": {
             "allOf": [
@@ -17351,6 +17359,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "folderId": {
+            "format": "uuid",
+            "type": "string"
           },
           "userId": {
             "format": "uuid",

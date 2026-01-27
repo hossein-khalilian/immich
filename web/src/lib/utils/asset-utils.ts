@@ -215,7 +215,7 @@ export const downloadArchive = async (fileName: string, options: Omit<DownloadIn
       const { data } = await downloadRequest({
         method: 'POST',
         url: getBaseUrl() + '/download/archive' + (queryParams ? `?${queryParams}` : ''),
-        data: { assetIds: archive.assetIds },
+        data: { assetIds: archive.assetIds, folderId: options.folderId },
         signal: abort.signal,
         onDownloadProgress: (event) => downloadManager.update(downloadKey, event.loaded),
       });
