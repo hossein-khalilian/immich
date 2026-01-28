@@ -73,7 +73,7 @@ export class FolderController {
     return this.service.get(auth, id, dto);
   }
 
-  @Authenticated({ permission: Permission.FolderRead })
+  @Authenticated({ permission: Permission.FolderRead, sharedLink: true })
   @Get(':id/subfolders')
   @Endpoint({
     summary: 'Get subfolders',

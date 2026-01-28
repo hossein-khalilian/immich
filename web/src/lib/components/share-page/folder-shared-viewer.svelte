@@ -170,17 +170,17 @@
       </section>
     {/if}
 
-    <!-- Assets Timeline (if folder has direct assets) -->
-    {#if folder.assetCount > 0}
+    <!-- Assets Timeline -->
+    {#if folder.id}
       <section class="px-2 md:px-0 mt-8">
         <Timeline enableRouting={true} bind:timelineManager {options} {assetInteraction}>
           {#snippet empty()}
-            <!-- Timeline handles empty state -->
+            {#if !hasSubfoldersOrAlbums}
+              <EmptyPlaceholder text={$t('empty_folder')} class="mt-10 mx-auto" />
+            {/if}
           {/snippet}
         </Timeline>
       </section>
-    {:else if !hasSubfoldersOrAlbums}
-      <EmptyPlaceholder text={$t('empty_folder')} class="mt-10 mx-auto" />
     {/if}
   </div>
 </main>

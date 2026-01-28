@@ -9,6 +9,7 @@
   import { setSharedLink } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
   import { navigate } from '$lib/utils/navigation';
+  import { hydrateSharedLinkFolder } from '$lib/utils/shared-links';
   import { getMySharedLink, SharedLinkType, type AssetResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
   import { Button, Logo, PasswordInput } from '@immich/ui';
   import { tick } from 'svelte';
@@ -41,6 +42,7 @@
   const handlePasswordSubmit = async () => {
     try {
       sharedLink = await getMySharedLink({ password, key, slug });
+      sharedLink = await hydrateSharedLinkFolder(sharedLink, { key, slug });
       setSharedLink(sharedLink);
       passwordRequired = false;
       title = (sharedLink.album ? sharedLink.album.albumName : $t('public_share')) + ' - Immich';

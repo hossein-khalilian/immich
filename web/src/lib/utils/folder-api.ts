@@ -42,6 +42,23 @@ export const getFolderInfo = async (id: string): Promise<FolderResponseDto> => {
   return data;
 };
 
+export const getFolderInfoWithQuery = async (
+  id: string,
+  params?: Record<string, string | boolean | undefined>,
+  fetchFn: typeof fetch = fetch,
+): Promise<FolderResponseDto> => {
+  const queryString = buildQueryString(params || {});
+  const url = `${getBaseUrl()}/folders/${id}${queryString ? `?${queryString}` : ''}`;
+  const response = await fetchFn(url, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch folder: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
 export const createFolder = async (createFolderDto: CreateFolderDto): Promise<FolderResponseDto> => {
   const queryString = buildQueryString(authManager.params);
   const url = `${getBaseUrl()}/folders${queryString ? `?${queryString}` : ''}`;
@@ -182,6 +199,23 @@ export const getSubfolders = async (id: string): Promise<FolderResponseDto[]> =>
   const queryString = buildQueryString(authManager.params);
   const url = `${getBaseUrl()}/folders/${id}/subfolders${queryString ? `?${queryString}` : ''}`;
   const response = await fetch(url, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch subfolders: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+export const getSubfoldersWithQuery = async (
+  id: string,
+  params?: Record<string, string | boolean | undefined>,
+  fetchFn: typeof fetch = fetch,
+): Promise<FolderResponseDto[]> => {
+  const queryString = buildQueryString(params || {});
+  const url = `${getBaseUrl()}/folders/${id}/subfolders${queryString ? `?${queryString}` : ''}`;
+  const response = await fetchFn(url, {
     credentials: 'include',
   });
   if (!response.ok) {
