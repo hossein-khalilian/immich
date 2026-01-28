@@ -98,10 +98,20 @@ class AlbumAccess {
       .select('album.id')
       .leftJoin('album_user', 'album_user.albumId', 'album.id')
       .leftJoin('user', (join) => join.onRef('user.id', '=', 'album_user.userId').on('user.deletedAt', 'is', null))
+      .leftJoin('folder_album', 'folder_album.albumId', 'album.id')
+      .leftJoin('folder_closure', 'folder_closure.id_descendant', 'folder_album.folderId')
+      .leftJoin('folder_user as folderUsers', 'folderUsers.folderId', 'folder_closure.id_ancestor')
+      .leftJoin('user as folderUser', (join) =>
+        join.onRef('folderUser.id', '=', 'folderUsers.userId').on('folderUser.deletedAt', 'is', null),
+      )
       .where('album.id', 'in', [...albumIds])
       .where('album.deletedAt', 'is', null)
-      .where('user.id', '=', userId)
-      .where('album_user.role', 'in', [...accessRole])
+      .where((eb) =>
+        eb.or([
+          eb.and([eb('user.id', '=', userId), eb('album_user.role', 'in', [...accessRole])]),
+          eb.and([eb('folderUser.id', '=', userId), eb('folderUsers.role', 'in', [...accessRole])]),
+        ]),
+      )
       .execute()
       .then((albums) => new Set(albums.map((album) => album.id)));
   }
@@ -217,6 +227,8 @@ class AssetAccess {
       return new Set<string>();
     }
 
+    const accessRole = [AlbumUserRole.Editor, AlbumUserRole.Viewer];
+
     return this.db
       .with('target', (qb) => qb.selectNoFrom(sql`array[${sql.join([...assetIds])}]::uuid[]`.as('ids')))
       .selectFrom('album')
@@ -226,6 +238,12 @@ class AssetAccess {
       )
       .leftJoin('album_user as albumUsers', 'albumUsers.albumId', 'album.id')
       .leftJoin('user', (join) => join.onRef('user.id', '=', 'albumUsers.userId').on('user.deletedAt', 'is', null))
+      .leftJoin('folder_album', 'folder_album.albumId', 'album.id')
+      .leftJoin('folder_closure', 'folder_closure.id_descendant', 'folder_album.folderId')
+      .leftJoin('folder_user as folderUsers', 'folderUsers.folderId', 'folder_closure.id_ancestor')
+      .leftJoin('user as folderUser', (join) =>
+        join.onRef('folderUser.id', '=', 'folderUsers.userId').on('folderUser.deletedAt', 'is', null),
+      )
       .crossJoin('target')
       .select(['asset.id', 'asset.livePhotoVideoId'])
       .where((eb) =>
@@ -234,7 +252,13 @@ class AssetAccess {
           eb('asset.livePhotoVideoId', '=', sql<string>`any(target.ids)`),
         ]),
       )
-      .where((eb) => eb.or([eb('album.ownerId', '=', userId), eb('user.id', '=', userId)]))
+      .where((eb) =>
+        eb.or([
+          eb('album.ownerId', '=', userId),
+          eb('user.id', '=', userId),
+          eb.and([eb('folderUser.id', '=', userId), eb('folderUsers.role', 'in', [...accessRole])]),
+        ]),
+      )
       .where('album.deletedAt', 'is', null)
       .execute()
       .then((assets) => {

@@ -15,6 +15,7 @@
     showItemCount?: boolean;
     preload?: boolean;
     onShowContextMenu?: ((position: ContextMenuPosition) => unknown) | undefined;
+    onclick?: ((e: MouseEvent) => void) | undefined;
   }
 
   let {
@@ -24,6 +25,7 @@
     showItemCount = false,
     preload = false,
     onShowContextMenu = undefined,
+    onclick = undefined,
   }: Props = $props();
 
   const showAlbumContextMenu = (e: MouseEvent) => {
@@ -39,6 +41,7 @@
   role="button"
   tabindex="0"
   oncontextmenu={onShowContextMenu ? showAlbumContextMenu : undefined}
+  {onclick}
 >
   {#if onShowContextMenu}
     <div

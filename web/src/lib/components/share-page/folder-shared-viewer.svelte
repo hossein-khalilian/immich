@@ -192,12 +192,12 @@
 
 {#if viewMode === 'album' && selectedAlbum}
   <!-- Album Viewer Mode -->
-  <AlbumViewer sharedLink={{ ...sharedLink, album: selectedAlbum, type: 'ALBUM' as any }} />
+  <AlbumViewer sharedLink={{ ...sharedLink, album: selectedAlbum, type: 'ALBUM' as any }} onBack={backToFolder} enableRouting={false} />
 {:else}
   <!-- Folder Viewer Mode -->
-  <main class="relative h-dvh overflow-hidden px-2 md:px-6 max-md:pt-(--navbar-height-md) pt-(--navbar-height)">
-    <div class="immich-scrollbar h-full overflow-y-auto pb-20">
-      <section class="pt-8 md:pt-24 px-2 md:px-0">
+<main class="relative h-dvh overflow-hidden px-2 md:px-6 max-md:pt-(--navbar-height-md) pt-(--navbar-height)">
+  <div class="immich-scrollbar h-full overflow-y-auto pb-20">
+    <section class="pt-8 md:pt-24 px-2 md:px-0">
         <!-- Breadcrumb Navigation -->
         {#if breadcrumbPath.length > 1}
           <nav class="flex items-center gap-1 text-sm mb-4 flex-wrap">
@@ -220,22 +220,22 @@
           </nav>
         {/if}
 
-        <!-- FOLDER TITLE -->
-        <h1 class="text-2xl md:text-4xl lg:text-6xl text-primary outline-none transition-all">
-          {folder.folderName}
-        </h1>
+      <!-- FOLDER TITLE -->
+      <h1 class="text-2xl md:text-4xl lg:text-6xl text-primary outline-none transition-all">
+        {folder.folderName}
+      </h1>
 
-        <FolderSummary {folder} />
+      <FolderSummary {folder} />
 
-        <!-- FOLDER DESCRIPTION -->
-        {#if folder.description}
-          <p
-            class="whitespace-pre-line mb-12 mt-6 w-full pb-2 text-start font-medium text-base text-black dark:text-gray-300"
-          >
-            {folder.description}
-          </p>
-        {/if}
-      </section>
+      <!-- FOLDER DESCRIPTION -->
+      {#if folder.description}
+        <p
+          class="whitespace-pre-line mb-12 mt-6 w-full pb-2 text-start font-medium text-base text-black dark:text-gray-300"
+        >
+          {folder.description}
+        </p>
+      {/if}
+    </section>
 
       <!-- Loading indicator -->
       {#if isLoading}
@@ -243,104 +243,90 @@
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-immich-primary"></div>
         </div>
       {:else}
-        <!-- Subfolders and Albums -->
-        {#if hasSubfoldersOrAlbums}
-          <section class="px-2 md:px-0">
-            <!-- Subfolders Section -->
-            {#if subfolders.length > 0}
-              <div class="mb-8">
-                <div class="flex items-center gap-2 mb-4">
-                  <Icon icon={mdiFolderOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
-                  <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                    {$t('folders')} ({subfolders.length})
-                  </h2>
-                </div>
+    <!-- Subfolders and Albums -->
+    {#if hasSubfoldersOrAlbums}
+      <section class="px-2 md:px-0">
+        <!-- Subfolders Section -->
+        {#if subfolders.length > 0}
+          <div class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+              <Icon icon={mdiFolderOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
+              <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                {$t('folders')} ({subfolders.length})
+              </h2>
+            </div>
                 <div class="grid grid-auto-fill-56 gap-y-4">
                   {#each subfolders as subfolder (subfolder.id)}
-                    <div class="relative">
-                      <button
-                        type="button"
-                        onclick={() => navigateToFolder(subfolder.id, subfolder.folderName)}
-                        class="block w-full text-start cursor-pointer"
-                      >
-                        <FolderCard
-                          folder={subfolder}
-                          showOwner={false}
-                          showDateRange
-                          showItemCount
-                        />
-                      </button>
-                    </div>
+                    <FolderCard
+                      folder={subfolder}
+                      showOwner={false}
+                      showDateRange
+                      showItemCount
+                      onclick={() => navigateToFolder(subfolder.id, subfolder.folderName)}
+                    />
                   {/each}
                 </div>
-              </div>
-            {/if}
+          </div>
+        {/if}
 
-            <!-- Albums Section -->
-            {#if folderAlbums.length > 0}
-              <div class="mt-6">
-                <div class="flex items-center gap-2 mb-4">
-                  <Icon icon={mdiImageOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
-                  <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                    {$t('albums')} ({folderAlbums.length})
-                  </h2>
-                </div>
+        <!-- Albums Section -->
+        {#if folderAlbums.length > 0}
+          <div class="mt-6">
+            <div class="flex items-center gap-2 mb-4">
+              <Icon icon={mdiImageOutline} size="20" class="text-immich-primary dark:text-immich-dark-primary" />
+              <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                {$t('albums')} ({folderAlbums.length})
+              </h2>
+            </div>
                 <div class="grid grid-auto-fill-56 gap-y-4">
                   {#each folderAlbums as album (album.id)}
-                    <div class="relative">
-                      <button
-                        type="button"
-                        onclick={() => navigateToAlbum(album)}
-                        class="block w-full text-start cursor-pointer"
-                      >
-                        <AlbumCard
-                          {album}
-                          showOwner={false}
-                          showDateRange
-                          showItemCount
-                        />
-                      </button>
-                    </div>
+                    <AlbumCard
+                      {album}
+                      showOwner={false}
+                      showDateRange
+                      showItemCount
+                      onclick={() => navigateToAlbum(album)}
+                    />
                   {/each}
                 </div>
-              </div>
-            {/if}
-          </section>
+          </div>
         {/if}
+      </section>
+    {/if}
 
-        <!-- Assets Timeline -->
-        {#if folder.id}
-          <section class="px-2 md:px-0 mt-8">
-            <Timeline enableRouting={true} bind:timelineManager {options} {assetInteraction}>
-              {#snippet empty()}
-                {#if !hasSubfoldersOrAlbums}
-                  <EmptyPlaceholder text={$t('empty_folder')} class="mt-10 mx-auto" />
-                {/if}
-              {/snippet}
-            </Timeline>
-          </section>
+    <!-- Assets Timeline -->
+    {#if folder.id}
+      <section class="px-2 md:px-0 mt-8">
+        <Timeline enableRouting={true} bind:timelineManager {options} {assetInteraction}>
+          {#snippet empty()}
+            {#if !hasSubfoldersOrAlbums}
+              <EmptyPlaceholder text={$t('empty_folder')} class="mt-10 mx-auto" />
+            {/if}
+          {/snippet}
+        </Timeline>
+      </section>
         {/if}
-      {/if}
-    </div>
-  </main>
+    {/if}
+  </div>
+</main>
 {/if}
 
 {#if viewMode === 'folder'}
-  <header>
-    {#if assetInteraction.selectionActive}
-      <AssetSelectControlBar
-        ownerId={user?.id}
-        assets={assetInteraction.selectedAssets}
-        clearSelect={() => assetInteraction.clearMultiselect()}
-      >
-        <SelectAllAssets {timelineManager} {assetInteraction} />
-        {#if sharedLink.allowDownload}
-          <DownloadAction filename="{folder.folderName}.zip" />
-        {/if}
-      </AssetSelectControlBar>
-    {:else}
+<header>
+  {#if assetInteraction.selectionActive}
+    <AssetSelectControlBar
+      ownerId={user?.id}
+      assets={assetInteraction.selectedAssets}
+      clearSelect={() => assetInteraction.clearMultiselect()}
+    >
+      <SelectAllAssets {timelineManager} {assetInteraction} />
+      {#if sharedLink.allowDownload}
+        <DownloadAction filename="{folder.folderName}.zip" />
+      {/if}
+    </AssetSelectControlBar>
+  {:else}
       <ControlAppBar showBackButton={!isAtRoot} onClose={navigateToParent}>
-        {#snippet leading()}
+      {#snippet leading()}
           {#if !isAtRoot}
             <IconButton
               shape="round"
@@ -351,71 +337,49 @@
               icon={mdiArrowLeft}
             />
           {/if}
-          <a data-sveltekit-preload-data="hover" class="ms-4" href="/">
-            <Logo variant={mobileDevice.maxMd ? 'icon' : 'inline'} class="min-w-10" />
-          </a>
-        {/snippet}
-
-        {#snippet trailing()}
-          <CastButton />
-
-          {#if sharedLink.allowUpload}
-            <IconButton
-              shape="round"
-              color="secondary"
-              variant="ghost"
-              aria-label={$t('add_photos')}
-              onclick={() => openFileUploadDialog({ folderId: folder.id })}
-              icon={mdiFileImagePlusOutline}
-            />
-          {/if}
-
-          {#if folder.assetCount > 0 && sharedLink.allowDownload}
-            <IconButton
-              shape="round"
-              variant="ghost"
-              color="secondary"
-              aria-label={$t('slideshow')}
-              onclick={handleStartSlideshow}
-              icon={mdiPresentationPlay}
-            />
-          {/if}
-          
-          {#if sharedLink.allowDownload}
-            <IconButton
-              shape="round"
-              color="secondary"
-              variant="ghost"
-              aria-label={$t('download')}
-              onclick={() => handleDownloadFolder(folder)}
-              icon={mdiDownload}
-            />
-          {/if}
-          <ThemeButton />
-        {/snippet}
-      </ControlAppBar>
-    {/if}
-  </header>
-{:else if viewMode === 'album'}
-  <header>
-    <ControlAppBar showBackButton={true} onClose={backToFolder}>
-      {#snippet leading()}
-        <IconButton
-          shape="round"
-          color="secondary"
-          variant="ghost"
-          aria-label={$t('go_back')}
-          onclick={backToFolder}
-          icon={mdiArrowLeft}
-        />
         <a data-sveltekit-preload-data="hover" class="ms-4" href="/">
           <Logo variant={mobileDevice.maxMd ? 'icon' : 'inline'} class="min-w-10" />
         </a>
       {/snippet}
 
       {#snippet trailing()}
+        <CastButton />
+
+        {#if sharedLink.allowUpload}
+          <IconButton
+            shape="round"
+            color="secondary"
+            variant="ghost"
+            aria-label={$t('add_photos')}
+            onclick={() => openFileUploadDialog({ folderId: folder.id })}
+            icon={mdiFileImagePlusOutline}
+          />
+        {/if}
+
+        {#if folder.assetCount > 0 && sharedLink.allowDownload}
+          <IconButton
+            shape="round"
+            variant="ghost"
+            color="secondary"
+            aria-label={$t('slideshow')}
+            onclick={handleStartSlideshow}
+            icon={mdiPresentationPlay}
+          />
+        {/if}
+        
+        {#if sharedLink.allowDownload}
+          <IconButton
+            shape="round"
+            color="secondary"
+            variant="ghost"
+            aria-label={$t('download')}
+            onclick={() => handleDownloadFolder(folder)}
+            icon={mdiDownload}
+          />
+        {/if}
         <ThemeButton />
       {/snippet}
     </ControlAppBar>
-  </header>
+  {/if}
+</header>
 {/if}

@@ -19,7 +19,7 @@
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
   import type { AlbumResponseDto, SharedLinkResponseDto, UserResponseDto } from '@immich/sdk';
   import { IconButton, Logo } from '@immich/ui';
-  import { mdiDownload, mdiFileImagePlusOutline, mdiPresentationPlay } from '@mdi/js';
+  import { mdiArrowLeft, mdiDownload, mdiFileImagePlusOutline, mdiPresentationPlay } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import ControlAppBar from '../shared-components/control-app-bar.svelte';
   import ThemeButton from '../shared-components/theme-button.svelte';
@@ -28,9 +28,11 @@
   interface Props {
     sharedLink: SharedLinkResponseDto;
     user?: UserResponseDto | undefined;
+    onBack?: (() => void) | undefined;
+    enableRouting?: boolean;
   }
 
-  let { sharedLink, user = undefined }: Props = $props();
+  let { sharedLink, user = undefined, onBack = undefined, enableRouting = true }: Props = $props();
 
   const album = sharedLink.album as AlbumResponseDto;
 
@@ -72,7 +74,7 @@
 />
 
 <main class="relative h-dvh overflow-hidden px-2 md:px-6 max-md:pt-(--navbar-height-md) pt-(--navbar-height)">
-  <Timeline enableRouting={true} {album} bind:timelineManager {options} {assetInteraction}>
+  <Timeline {enableRouting} {album} bind:timelineManager {options} {assetInteraction}>
     <section class="pt-8 md:pt-24 px-2 md:px-0">
       <!-- ALBUM TITLE -->
       <h1 class="text-2xl md:text-4xl lg:text-6xl text-primary outline-none transition-all">
@@ -108,8 +110,18 @@
       {/if}
     </AssetSelectControlBar>
   {:else}
-    <ControlAppBar showBackButton={false}>
+    <ControlAppBar showBackButton={!!onBack} onClose={onBack}>
       {#snippet leading()}
+        {#if onBack}
+          <IconButton
+            shape="round"
+            color="secondary"
+            variant="ghost"
+            aria-label={$t('go_back')}
+            onclick={onBack}
+            icon={mdiArrowLeft}
+          />
+        {/if}
         <a data-sveltekit-preload-data="hover" class="ms-4" href="/">
           <Logo variant={mobileDevice.maxMd ? 'icon' : 'inline'} class="min-w-10" />
         </a>
