@@ -17771,7 +17771,6 @@
           "hasSharedLink",
           "id",
           "isActivityEnabled",
-          "owner",
           "ownerId",
           "shared",
           "updatedAt"

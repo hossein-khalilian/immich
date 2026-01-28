@@ -130,5 +130,10 @@ declare module '@immich/sdk' {
     showMetadata?: boolean;
   }
   
+  // Extend SharedLinkResponseDto to include folder
+  export interface SharedLinkResponseDto {
+    folder?: FolderResponseDto;
+  }
+  
   export type { FolderResponseDto, CreateFolderDto, UpdateFolderDto, FolderUserAddDto, AddFolderUsersDto, BulkIdResponseDto };
 }

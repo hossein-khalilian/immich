@@ -1798,6 +1798,7 @@
   "profile_drawer_readonly_mode": "حالت فقط خواندنی فعال است. آیکون آواتار را طولانی فشار دهید تا خارج شوید.",
   "profile_image_of_user": "تصویر پروفایل {user}",
   "public_album": "آلبوم عمومی",
+  "public_folder": "پوشه عمومی",
   "purchase_account_info": "حامی",
   "purchase_activated_subtitle": "از حمایت شما از Immich و نرم‌افزار متن‌باز متشکریم",
   "purchase_activated_time": "فعال شده در {date}",

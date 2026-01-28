@@ -81,6 +81,8 @@
         <Text size="large" color="primary" class="flex place-items-center gap-2 break-all font-medium">
           {#if sharedLink.type === SharedLinkType.Album}
             {sharedLink.album?.albumName}
+          {:else if sharedLink.type === SharedLinkType.Folder}
+            {sharedLink.folder?.folderName}
           {:else if sharedLink.type === SharedLinkType.Individual}
             {$t('individual_share')}
           {/if}

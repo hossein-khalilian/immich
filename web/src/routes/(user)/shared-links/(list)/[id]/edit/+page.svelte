@@ -23,7 +23,7 @@
   let showMetadata = $state(sharedLink.showMetadata);
   let password = $state(sharedLink.password ?? '');
   let slug = $state(sharedLink.slug ?? '');
-  let shareType = sharedLink.album ? SharedLinkType.Album : SharedLinkType.Individual;
+  let shareType = sharedLink.album ? SharedLinkType.Album : sharedLink.folder ? SharedLinkType.Folder : SharedLinkType.Individual;
   let expiresAt = $state(sharedLink.expiresAt);
 
   const onClose = async () => {
@@ -51,6 +51,13 @@
     <div class="text-sm">
       {$t('public_album')} |
       <span class="text-primary">{sharedLink.album?.albumName}</span>
+    </div>
+  {/if}
+
+  {#if shareType === SharedLinkType.Folder}
+    <div class="text-sm">
+      {$t('public_folder')} |
+      <span class="text-primary">{sharedLink.folder?.folderName}</span>
     </div>
   {/if}
 

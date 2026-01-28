@@ -1,5 +1,6 @@
 <script lang="ts">
   import AlbumCover from '$lib/components/album-page/album-cover.svelte';
+  import FolderCover from '$lib/components/folder-page/folder-cover.svelte';
   import AssetCover from '$lib/components/sharedlinks-page/covers/asset-cover.svelte';
   import NoCover from '$lib/components/sharedlinks-page/covers/no-cover.svelte';
   import { getAssetThumbnailUrl } from '$lib/utils';
@@ -18,6 +19,8 @@
 <div class="relative shrink-0 size-22">
   {#if sharedLink?.album}
     <AlbumCover album={sharedLink.album} class={className} {preload} />
+  {:else if sharedLink?.folder}
+    <FolderCover folder={sharedLink.folder} class={className} {preload} />
   {:else if sharedLink.assets[0]}
     <AssetCover
       alt={$t('individual_share')}

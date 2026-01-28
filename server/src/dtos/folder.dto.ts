@@ -172,7 +172,7 @@ export class FolderResponseDto {
   folderUsers!: FolderUserResponseDto[];
   hasSharedLink!: boolean;
   albums!: FolderAlbumResponseDto[];
-  owner!: UserResponseDto;
+  owner?: UserResponseDto;
   @ApiProperty({ type: 'integer' })
   albumCount!: number;
   lastModifiedAlbumTimestamp?: Date;
@@ -244,7 +244,7 @@ export const mapFolder = (entity: MapFolderDto, withAlbums: boolean, auth?: Auth
     updatedAt: entity.updatedAt,
     id: entity.id,
     ownerId: entity.ownerId,
-    owner: mapUser(entity.owner),
+    owner: entity.owner ? mapUser(entity.owner) : undefined,
     folderUsers: folderUsersSorted,
     shared: hasSharedUser || hasSharedLink,
     hasSharedLink,

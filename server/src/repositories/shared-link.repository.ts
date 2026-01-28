@@ -111,7 +111,7 @@ export class SharedLinkRepository {
             .selectAll('folder')
             .whereRef('folder.id', '=', 'shared_link.folderId')
             .where('folder.deletedAt', 'is', null)
-            .innerJoinLateral(
+            .leftJoinLateral(
               (eb) =>
                 eb
                   .selectFrom('user')

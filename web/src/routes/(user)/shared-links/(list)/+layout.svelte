@@ -29,11 +29,12 @@
     await refresh();
   });
 
-  type Filter = 'all' | 'album' | 'individual';
+  type Filter = 'all' | 'album' | 'folder' | 'individual';
 
   const filterMap: Record<Filter, string> = {
     all: $t('all'),
     album: $t('albums'),
+    folder: $t('folders'),
     individual: $t('individual_shares'),
   };
 
@@ -55,6 +56,7 @@
       ({ type }) =>
         selectedTab === 'all' ||
         (type === SharedLinkType.Album && selectedTab === 'album') ||
+        (type === SharedLinkType.Folder && selectedTab === 'folder') ||
         (type === SharedLinkType.Individual && selectedTab === 'individual'),
     ),
   );

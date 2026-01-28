@@ -8,16 +8,22 @@
   }
 
   let { folder }: Props = $props();
+
+  let dateRange = $derived(getFolderDateRange(folder));
+  let subfolderCount = $derived(folder?.subfolderCount ?? 0);
+  let assetCount = $derived(folder?.assetCount ?? 0);
 </script>
 
 <span class="my-2 flex gap-2 text-sm font-medium text-gray-500" data-testid="folder-details">
-  <span>{getFolderDateRange(folder)}</span>
-  {#if folder.subfolderCount && folder.subfolderCount > 0}
-    <span>•</span>
-    <span>{$t('subfolders_count', { values: { count: folder.subfolderCount } })}</span>
+  {#if dateRange}
+    <span>{dateRange}</span>
   {/if}
-  {#if folder.assetCount > 0}
-    <span>•</span>
-    <span>{$t('items_count', { values: { count: folder.assetCount } })}</span>
+  {#if subfolderCount > 0}
+    {#if dateRange}<span>•</span>{/if}
+    <span>{$t('subfolders_count', { values: { count: subfolderCount } })}</span>
+  {/if}
+  {#if assetCount > 0}
+    {#if dateRange || subfolderCount > 0}<span>•</span>{/if}
+    <span>{$t('items_count', { values: { count: assetCount } })}</span>
   {/if}
 </span>

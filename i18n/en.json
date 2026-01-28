@@ -1701,6 +1701,7 @@
   "profile_image_of_user": "Profile image of {user}",
   "profile_picture_set": "Profile picture set.",
   "public_album": "Public album",
+  "public_folder": "Public folder",
   "public_share": "Public Share",
   "purchase_account_info": "Supporter",
   "purchase_activated_subtitle": "Thank you for supporting Immich and open-source software",
