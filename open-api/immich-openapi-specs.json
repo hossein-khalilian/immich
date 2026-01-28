@@ -17678,7 +17678,13 @@
           "assetCount": {
             "type": "integer"
           },
+          "description": {
+            "type": "string"
+          },
           "id": {
+            "type": "string"
+          },
+          "order": {
             "type": "string"
           }
         },
@@ -17686,7 +17692,9 @@
           "albumName",
           "albumThumbnailAssetId",
           "assetCount",
-          "id"
+          "description",
+          "id",
+          "order"
         ],
         "type": "object"
       },

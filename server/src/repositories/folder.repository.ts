@@ -61,7 +61,7 @@ const withAlbums = (eb: ExpressionBuilder<DB, 'folder'>) => {
     .selectFrom((eb) =>
       eb
         .selectFrom('album')
-        .select(['album.id', 'album.albumName', 'album.albumThumbnailAssetId'])
+        .select(['album.id', 'album.albumName', 'album.albumThumbnailAssetId', 'album.order', 'album.description'])
         .select((eb) =>
           eb
             .selectFrom('album_asset')
@@ -188,6 +188,23 @@ export class FolderRepository {
           ),
         ]),
       )
+      .orderBy('folder.folderName', 'asc')
+      .execute();
+  }
+
+  /**
+   * Get direct subfolders of a folder (for shared link access - no ownership check)
+   */
+  @GenerateSql({ params: [DummyValue.UUID] })
+  async getSubfoldersForSharedLink(parentId: string) {
+    return this.db
+      .selectFrom('folder')
+      .selectAll('folder')
+      .select(withOwner)
+      .select(withFolderUsers)
+      .select(withSharedLink)
+      .where('folder.parentId', '=', parentId)
+      .where('folder.deletedAt', 'is', null)
       .orderBy('folder.folderName', 'asc')
       .execute();
   }

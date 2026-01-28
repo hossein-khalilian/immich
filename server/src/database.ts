@@ -211,6 +211,8 @@ export type FolderAlbum = {
   albumName: string;
   albumThumbnailAssetId: string | null;
   assetCount: number | null;
+  order: string;
+  description: string;
 };
 
 export type Folder = Selectable<FolderTable> & {

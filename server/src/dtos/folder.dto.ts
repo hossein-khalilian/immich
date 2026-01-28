@@ -150,6 +150,8 @@ export class FolderAlbumResponseDto {
   albumThumbnailAssetId!: string | null;
   @ApiProperty({ type: 'integer' })
   assetCount!: number;
+  order!: string;
+  description!: string;
 }
 
 export class ContributorCountResponseDto {
@@ -214,6 +216,8 @@ export const mapFolderAlbum = (album: FolderAlbum): FolderAlbumResponseDto => ({
   albumName: album.albumName,
   albumThumbnailAssetId: album.albumThumbnailAssetId,
   assetCount: album.assetCount ?? 0,
+  order: album.order,
+  description: album.description,
 });
 
 export const mapFolder = (entity: MapFolderDto, withAlbums: boolean, auth?: AuthDto): FolderResponseDto => {

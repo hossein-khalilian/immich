@@ -8,8 +8,9 @@ export interface FolderAlbumResponseDto {
   albumName: string;
   description: string;
   assetCount: number;
-  createdAt: string;
-  updatedAt: string;
+  order: string;
+  createdAt?: string;
+  updatedAt?: string;
   albumThumbnailAssetId?: string | null;
   owner?: {
     id: string;

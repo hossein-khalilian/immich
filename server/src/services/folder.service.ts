@@ -405,7 +405,11 @@ export class FolderService extends BaseService {
     await this.requireAccess({ auth, permission: Permission.FolderRead, ids: [id] });
     await this.folderRepository.updateThumbnails();
 
-    const folders = await this.folderRepository.getSubfolders(auth.user.id, id);
+    // Use shared link method if accessing via shared link (no user context)
+    const isSharedLinkAccess = auth.sharedLink !== undefined;
+    const folders = isSharedLinkAccess
+      ? await this.folderRepository.getSubfoldersForSharedLink(id)
+      : await this.folderRepository.getSubfolders(auth.user.id, id);
 
     // Get album counts
     const folderIds = folders.map((folder) => folder.id);

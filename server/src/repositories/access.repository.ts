@@ -113,7 +113,8 @@ class AlbumAccess {
       return new Set<string>();
     }
 
-    return this.db
+    // First check for direct album shared links
+    const directAlbumAccess = await this.db
       .selectFrom('shared_link')
       .select('shared_link.albumId')
       .where('shared_link.id', '=', sharedLinkId)
@@ -122,6 +123,23 @@ class AlbumAccess {
       .then(
         (sharedLinks) => new Set(sharedLinks.flatMap((sharedLink) => (sharedLink.albumId ? [sharedLink.albumId] : []))),
       );
+
+    // Then check for albums within shared folders (including descendant folders)
+    const folderAlbumAccess = await this.db
+      .selectFrom('shared_link')
+      .innerJoin('folder_closure', 'folder_closure.id_ancestor', 'shared_link.folderId')
+      .innerJoin('folder_album', 'folder_album.folderId', 'folder_closure.id_descendant')
+      .innerJoin('album', 'album.id', 'folder_album.albumId')
+      .select('album.id')
+      .where('shared_link.id', '=', sharedLinkId)
+      .where('shared_link.folderId', 'is not', null)
+      .where('album.id', 'in', [...albumIds])
+      .where('album.deletedAt', 'is', null)
+      .execute()
+      .then((albums) => new Set(albums.map((album) => album.id)));
+
+    // Combine both sets
+    return new Set([...directAlbumAccess, ...folderAlbumAccess]);
   }
 }
 
@@ -175,15 +193,17 @@ class FolderAccess {
       return new Set<string>();
     }
 
+    // Check if any of the requested folders are the shared folder OR a descendant of it
     return this.db
       .selectFrom('shared_link')
-      .select('shared_link.folderId')
+      .innerJoin('folder_closure', 'folder_closure.id_ancestor', 'shared_link.folderId')
+      .innerJoin('folder', 'folder.id', 'folder_closure.id_descendant')
+      .select('folder.id')
       .where('shared_link.id', '=', sharedLinkId)
-      .where('shared_link.folderId', 'in', [...folderIds])
+      .where('folder.id', 'in', [...folderIds])
+      .where('folder.deletedAt', 'is', null)
       .execute()
-      .then(
-        (sharedLinks) => new Set(sharedLinks.flatMap((sharedLink) => (sharedLink.folderId ? [sharedLink.folderId] : []))),
-      );
+      .then((folders) => new Set(folders.map((folder) => folder.id)));
   }
 }
 
@@ -282,7 +302,8 @@ class AssetAccess {
       return new Set<string>();
     }
 
-    return this.db
+    // Check assets from individual shared links and album shared links
+    const directAccess = await this.db
       .selectFrom('shared_link')
       .leftJoin('album', (join) => join.onRef('album.id', '=', 'shared_link.albumId').on('album.deletedAt', 'is', null))
       .leftJoin('shared_link_asset', 'shared_link_asset.sharedLinkId', 'shared_link.id')
@@ -324,6 +345,43 @@ class AssetAccess {
         }
         return allowedIds;
       });
+
+    // Check assets from albums within shared folders (including descendant folders)
+    const folderAccess = await this.db
+      .selectFrom('shared_link')
+      .innerJoin('folder_closure', 'folder_closure.id_ancestor', 'shared_link.folderId')
+      .innerJoin('folder_album', 'folder_album.folderId', 'folder_closure.id_descendant')
+      .innerJoin('album', (join) =>
+        join.onRef('album.id', '=', 'folder_album.albumId').on('album.deletedAt', 'is', null),
+      )
+      .innerJoin('album_asset', 'album_asset.albumId', 'album.id')
+      .innerJoin('asset', (join) =>
+        join.onRef('asset.id', '=', 'album_asset.assetId').on('asset.deletedAt', 'is', null),
+      )
+      .select(['asset.id as assetId', 'asset.livePhotoVideoId as assetLivePhotoVideoId'])
+      .where('shared_link.id', '=', sharedLinkId)
+      .where('shared_link.folderId', 'is not', null)
+      .where(
+        sql`array["asset"."id", "asset"."livePhotoVideoId"]`,
+        '&&',
+        sql`array[${sql.join([...assetIds])}]::uuid[] `,
+      )
+      .execute()
+      .then((rows) => {
+        const allowedIds = new Set<string>();
+        for (const row of rows) {
+          if (row.assetId && assetIds.has(row.assetId)) {
+            allowedIds.add(row.assetId);
+          }
+          if (row.assetLivePhotoVideoId && assetIds.has(row.assetLivePhotoVideoId)) {
+            allowedIds.add(row.assetLivePhotoVideoId);
+          }
+        }
+        return allowedIds;
+      });
+
+    // Combine both sets
+    return new Set([...directAccess, ...folderAccess]);
   }
 }
 
