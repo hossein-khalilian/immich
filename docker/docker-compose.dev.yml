@@ -59,6 +59,8 @@ services:
       IMMICH_THIRD_PARTY_BUG_FEATURE_URL: https://github.com/immich-app/immich/issues
       IMMICH_THIRD_PARTY_DOCUMENTATION_URL: https://docs.immich.app
       IMMICH_THIRD_PARTY_SUPPORT_URL: https://docs.immich.app/community-guides
+      DB_HOSTNAME: database
+      DB_PORT: 5432
     ports:
       - 9230:9230
       - 9231:9231
@@ -122,6 +124,9 @@ services:
       - model-cache:/cache
     env_file:
       - .env
+    environment:
+      DB_HOSTNAME: database
+      DB_PORT: 5432
     depends_on:
       - database
     restart: unless-stopped
