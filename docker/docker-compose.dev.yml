@@ -153,7 +153,7 @@ services:
       # Use a named volume instead of bind mount to avoid permission issues with Docker build context
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 127.0.0.1:54321:5432
     shm_size: 128mb
   # set IMMICH_TELEMETRY_INCLUDE=all in .env to enable metrics
   # immich-prometheus:
