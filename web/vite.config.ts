@@ -45,6 +45,17 @@ export default defineConfig({
     // connect to a remote backend during web-only development
     proxy,
     allowedHosts: true,
+    // When deployed behind a reverse proxy, HMR must use the public URL.
+    // Set VITE_HMR_HOST (e.g. gallery.abrishamerp.ir) and optionally
+    // VITE_HMR_PORT (443 for HTTPS) and VITE_HMR_PROTOCOL (wss) in .env
+    hmr:
+      process.env.VITE_HMR_HOST
+        ? {
+            host: process.env.VITE_HMR_HOST,
+            port: Number(process.env.VITE_HMR_PORT || 443),
+            protocol: (process.env.VITE_HMR_PROTOCOL as 'ws' | 'wss') || 'wss',
+          }
+        : true,
   },
   preview: {
     proxy,
